@@ -198,8 +198,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
       <div id="count-sections"></div>
       <div class="err" id="err-count"></div>
-      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="submitCheck()">Submit stock check</button>
-      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:4px;">Submits both count and weighing data together</p>
     </div>
   </div>
 
@@ -216,6 +214,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="summary-stat"><strong id="weigh-filled">0</strong> / <span id="weigh-total">0</span> weighed</div>
       </div>
       <div id="weigh-sections"></div>
+      <div class="err" id="err-count"></div>
+      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="submitCheck()">Submit stock check</button>
+      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:4px;">Submits both count and weighing data together</p>
+    </div>
+    <!-- Show submit even when no loose ingredients -->
+    <div id="weigh-submit-fallback" style="display:none;">
+      <div class="err" id="err-count-fb"></div>
+      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="submitCheck()">Submit stock check</button>
+      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:4px;">Submits count data to Sheets</p>
     </div>
   </div>
 
@@ -399,7 +406,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <script>
 const SK_CHECKS='stock_checks_v1';
 const SK_SETTINGS='stock_settings_v1';
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx8kfDDv3Mc5wNbzbpOXmSpNBqkdHmij4ZLMVsnWH8BbH-Gtyn6-NRRqc4kSX9cHr9Xdg/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbz94U9lZxLWEDhgSEw9Hbj371A0OVMmgm2yQEzQtRH7KiKfXrT4RAn-numo4M7rQpujfg/exec';
 
 let ingredients=[], stockChecks=[], settings={scriptUrl:SCRIPT_URL,sites:[]};
 let editingId=null, confirmCb=null;
@@ -507,7 +514,7 @@ function renderCount(){
   updateCountProgress();
 }
 function renderCountCard(ing){
-  const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" /></div>`:`<div class="ing-photo">🥫</div>`;
+  const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" onerror="this.style.display='none'" /></div>`:`<div class="ing-photo">🥫</div>`;
   let inputs=`<div class="tier-group"><label>Cases</label><input type="number" min="0" step="1" id="case_${ing.id}" placeholder="0" oninput="checkLow('${ing.id}');updateCountProgress();" /></div>`;
   if(ing.trackUnits)inputs+=`<div class="tier-group"><label>Units (${ing.unitLabel||'units'})</label><input type="number" min="0" step="1" id="units_${ing.id}" placeholder="0" oninput="updateCountProgress();" /></div>`;
   return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div><div class="low-stock-flag" id="flag_${ing.id}">⚠ Low stock</div></div></div>`;
@@ -541,7 +548,14 @@ function clearCountInputs(){
 }
 function renderWeigh(){
   const looseIngs=ingredients.filter(i=>i.trackLoose);
-  if(!looseIngs.length){document.getElementById('weigh-empty').style.display='';document.getElementById('weigh-content').style.display='none';return;}
+  const fallback=document.getElementById('weigh-submit-fallback');
+  if(!looseIngs.length){
+    document.getElementById('weigh-empty').style.display='';
+    document.getElementById('weigh-content').style.display='none';
+    if(fallback)fallback.style.display=ingredients.length?'':'none';
+    return;
+  }
+  if(fallback)fallback.style.display='none';
   document.getElementById('weigh-empty').style.display='none';
   document.getElementById('weigh-content').style.display='';
   document.getElementById('weigh-week').textContent=weekOf();
@@ -556,7 +570,7 @@ function renderWeigh(){
   updateWeighProgress();
 }
 function renderWeighCard(ing){
-  const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" /></div>`:`<div class="ing-photo">🥫</div>`;
+  const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" onerror="this.style.display='none'" /></div>`:`<div class="ing-photo">🥫</div>`;
   const inputs=`<div class="tier-group"><label>Loose (${ing.looseUnit||'g'})</label><input type="number" min="0" step="0.1" id="loose_${ing.id}" placeholder="0" oninput="updateWeighProgress();" /></div>`;
   return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div></div></div>`;
 }
@@ -578,10 +592,15 @@ async function submitCheck(){
   const siteVal=document.getElementById('session-site').value;
   const staffVal=document.getElementById('session-staff').value.trim();
   const err=document.getElementById('err-count');
+  const errFb=document.getElementById('err-count-fb');
+  const showErr=(msg)=>{
+    if(err)err.style.display=msg?'':'none';if(err&&msg)err.textContent=msg;
+    if(errFb)errFb.style.display=msg?'':'none';if(errFb&&msg)errFb.textContent=msg;
+  };
   const missing=[];
   if(!dateVal)missing.push('date');if(!siteVal)missing.push('site');if(!staffVal)missing.push('staff name');
-  if(missing.length){err.style.display='';err.textContent='Please fill in: '+missing.join(', ');return;}
-  err.style.display='none';
+  if(missing.length){showErr('Please fill in: '+missing.join(', '));return;}
+  showErr('');
   const now=new Date().toISOString();
   const rows=ingredients.map(ing=>{
     const caseVal=document.getElementById('case_'+ing.id)?.value;
@@ -633,7 +652,7 @@ function renderSetupList(){
     ${g.items.map(ing=>{
       const tiers=['Case',ing.trackUnits?`Units (${ing.unitLabel||'units'})`:''  ,ing.trackLoose?`Loose (${ing.looseUnit||'g'})`:''  ].filter(Boolean).join(' · ');
       return`<div class="ing-setup-item">
-        <div class="ing-setup-photo" onclick="openEdit('${ing.id}')">${ing.photo?`<img src="${ing.photo}" />`:'🥫'}</div>
+        <div class="ing-setup-photo" onclick="openEdit('${ing.id}')">${ing.photo?`<img src="${ing.photo}" onerror="this.style.display='none'" />`:'🥫'}</div>
         <div class="ing-setup-body"><div class="ing-setup-name">${ing.name}</div><div class="ing-setup-meta">${tiers}${ing.minStock?' · min '+ing.minStock+' cases':''}</div></div>
         <div class="ing-setup-actions"><button class="btn-sm" onclick="openEdit('${ing.id}')">Edit</button><button class="btn-sm btn-danger-sm" onclick="confirmDelete('${ing.id}')">✕</button></div>
       </div>`;
