@@ -394,33 +394,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <div class="toast" id="toast"></div>
 
 <script>
-const SK_INGS='stock_ingredients_v2';
 const SK_CHECKS='stock_checks_v1';
 const SK_SETTINGS='stock_settings_v1';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx8kfDDv3Mc5wNbzbpOXmSpNBqkdHmij4ZLMVsnWH8BbH-Gtyn6-NRRqc4kSX9cHr9Xdg/exec';
 
-let ingredients=[], stockChecks=[], settings={scriptUrl:'',sites:[]};
+let ingredients=[], stockChecks=[], settings={scriptUrl:SCRIPT_URL,sites:[]};
 let editingId=null, confirmCb=null;
 let tierState={s:{units:false,loose:false}, e:{units:false,loose:false}};
 let photoData={s:null, e:null};
 
-function load(){
-  try{const d=localStorage.getItem(SK_INGS);if(d)ingredients=JSON.parse(d);}catch(e){}
+async function load(){
   try{const d=localStorage.getItem(SK_CHECKS);if(d)stockChecks=JSON.parse(d);}catch(e){}
-  try{const d=localStorage.getItem(SK_SETTINGS);if(d)settings={scriptUrl:'',sites:[],...JSON.parse(d)};}catch(e){}
-  if(!settings.scriptUrl){
-    settings.scriptUrl='https://script.google.com/macros/s/AKfycbx3_TkMTNhumFGA-oBXRgBrfiQ3aLjHEx_wbhwgESHk1PWHbwH9OzEsAQQVG5BtyGcYzA/exec';
-    localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));
-  }
-  document.getElementById('s-script-url').value=settings.scriptUrl||'';
+  try{const d=localStorage.getItem(SK_SETTINGS);if(d)settings={scriptUrl:SCRIPT_URL,sites:[],...JSON.parse(d)};}catch(e){}
+  settings.scriptUrl=SCRIPT_URL;
+  document.getElementById('s-script-url').value=SCRIPT_URL;
   document.getElementById('session-date').valueAsDate=new Date();
-  populateSiteDropdown();
-  renderSitesList();
-  updateSyncBadge(settings.scriptUrl?'ready':'no-url');
+  updateSyncBadge('syncing');
+  await Promise.all([fetchIngredients(), fetchSites()]);
+  updateSyncBadge('ready');
   renderCount();
   renderSetupList();
 }
-function persist(){localStorage.setItem(SK_INGS,JSON.stringify(ingredients));}
 function persistChecks(){localStorage.setItem(SK_CHECKS,JSON.stringify(stockChecks));}
+function saveLocalSettings(){localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-GB');}
 function weekOf(d){const dt=new Date(d||Date.now());dt.setDate(dt.getDate()-dt.getDay()+1);return dt.toLocaleDateString('en-GB');}
@@ -429,12 +425,29 @@ function updateSyncBadge(state){
   const el=document.getElementById('sync-status');
   if(state==='syncing'){el.textContent='◌ syncing';el.style.color='#8a6500';}
   else if(state==='synced'){el.textContent='✓ synced';el.style.color='#2d6e2d';}
-  else if(state==='error'){el.textContent='✗ sync failed';el.style.color='#c0392b';}
+  else if(state==='error'){el.textContent='✗ error';el.style.color='#c0392b';}
   else if(state==='no-url'){el.textContent='● local only';el.style.color='#b0ada5';}
   else{el.textContent='● sheets';el.style.color='#2d6e2d';}
 }
 
-// ── Tabs ──
+async function api(body){
+  const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(body),headers:{'Content-Type':'text/plain'}});
+  return res.json();
+}
+async function apiGet(params){
+  const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+  const res=await fetch(SCRIPT_URL+'?'+qs);
+  return res.json();
+}
+
+async function fetchIngredients(){
+  try{const json=await apiGet({action:'getIngredients'});if(json.ingredients)ingredients=json.ingredients;}catch(e){}
+}
+async function fetchSites(){
+  try{const json=await apiGet({action:'getSites'});if(json.sites){settings.sites=json.sites;saveLocalSettings();}}catch(e){}
+  populateSiteDropdown();renderSitesList();
+}
+
 function showTab(t){
   ['count','weigh','records','setup'].forEach(p=>{
     document.getElementById('panel-'+p).style.display=p===t?'':'none';
@@ -443,6 +456,7 @@ function showTab(t){
   if(t==='records')renderRecords();
   if(t==='count')renderCount();
   if(t==='weigh')renderWeigh();
+  if(t==='setup'){renderSetupList();fetchIngredients().then(()=>{renderSetupList();renderCount();});}
 }
 function showSetupTab(t){
   ['ingredients','add','settings'].forEach(p=>{
@@ -451,19 +465,13 @@ function showSetupTab(t){
   });
   if(t==='ingredients')renderSetupList();
 }
-
-// ── Tier toggles ──
 function tierToggle(prefix,tier){
   tierState[prefix][tier]=!tierState[prefix][tier];
   const on=tierState[prefix][tier];
   document.getElementById(prefix+'-'+tier+'-toggle').classList.toggle('on',on);
   document.getElementById(prefix+'-'+tier+'-extra').style.display=on?'':'none';
 }
-function setTier(prefix,tier,on){
-  if(tierState[prefix][tier]!==on) tierToggle(prefix,tier);
-}
-
-// ── Photo ──
+function setTier(prefix,tier,on){if(tierState[prefix][tier]!==on)tierToggle(prefix,tier);}
 function handlePhoto(prefix,e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
@@ -476,8 +484,6 @@ function handlePhoto(prefix,e){
   };
   reader.readAsDataURL(file);
 }
-
-// ── Storage groups ──
 function getGroups(){
   const order=['Dry Store','Fridge','Freezer'];
   const g={};order.forEach(s=>g[s]=[]);
@@ -485,7 +491,6 @@ function getGroups(){
   return order.map(s=>({name:s,items:g[s]})).filter(g=>g.items.length>0);
 }
 
-// ── Count tab (Cases + Units) ──
 function renderCount(){
   const total=ingredients.length;
   if(!total){document.getElementById('count-empty').style.display='';document.getElementById('count-content').style.display='none';return;}
@@ -498,24 +503,18 @@ function renderCount(){
     ${g.items.map(ing=>renderCountCard(ing)).join('')}`).join('');
   updateCountProgress();
 }
-
 function renderCountCard(ing){
   const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" /></div>`:`<div class="ing-photo">🥫</div>`;
   let inputs=`<div class="tier-group"><label>Cases</label><input type="number" min="0" step="1" id="case_${ing.id}" placeholder="0" oninput="checkLow('${ing.id}');updateCountProgress();" /></div>`;
-  if(ing.trackUnits){
-    inputs+=`<div class="tier-group"><label>Units (${ing.unitLabel||'units'})</label><input type="number" min="0" step="1" id="units_${ing.id}" placeholder="0" oninput="updateCountProgress();" /></div>`;
-  }
+  if(ing.trackUnits)inputs+=`<div class="tier-group"><label>Units (${ing.unitLabel||'units'})</label><input type="number" min="0" step="1" id="units_${ing.id}" placeholder="0" oninput="updateCountProgress();" /></div>`;
   return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div><div class="low-stock-flag" id="flag_${ing.id}">⚠ Low stock</div></div></div>`;
 }
-
 function checkLow(id){
-  const ing=ingredients.find(i=>i.id===id);
-  if(!ing||!ing.minStock)return;
+  const ing=ingredients.find(i=>i.id===id);if(!ing||!ing.minStock)return;
   const val=parseFloat(document.getElementById('case_'+id)?.value)||0;
   const flag=document.getElementById('flag_'+id);
   if(flag)flag.classList.toggle('visible',val<ing.minStock);
 }
-
 function updateCountProgress(){
   let filled=0,low=0;
   ingredients.forEach(ing=>{
@@ -530,7 +529,6 @@ function updateCountProgress(){
   lw.style.display=low>0?'':'none';
   document.getElementById('count-low').textContent=low;
 }
-
 function clearCountInputs(){
   ingredients.forEach(ing=>{
     ['case_','units_'].forEach(p=>{const el=document.getElementById(p+ing.id);if(el)el.value='';});
@@ -538,8 +536,6 @@ function clearCountInputs(){
   });
   updateCountProgress();
 }
-
-// ── Weigh tab (Loose only) ──
 function renderWeigh(){
   const looseIngs=ingredients.filter(i=>i.trackLoose);
   if(!looseIngs.length){document.getElementById('weigh-empty').style.display='';document.getElementById('weigh-content').style.display='none';return;}
@@ -547,93 +543,40 @@ function renderWeigh(){
   document.getElementById('weigh-content').style.display='';
   document.getElementById('weigh-week').textContent=weekOf();
   document.getElementById('weigh-total').textContent=looseIngs.length;
-  // group only those with loose
   const order=['Dry Store','Fridge','Freezer'];
   const groups={};order.forEach(s=>groups[s]=[]);
   looseIngs.forEach(i=>{const s=i.storage||'Dry Store';if(!groups[s])groups[s]=[];groups[s].push(i);});
-  const filteredGroups=order.map(s=>({name:s,items:groups[s]})).filter(g=>g.items.length>0);
-  document.getElementById('weigh-sections').innerHTML=filteredGroups.map(g=>`
+  const fg=order.map(s=>({name:s,items:groups[s]})).filter(g=>g.items.length>0);
+  document.getElementById('weigh-sections').innerHTML=fg.map(g=>`
     <div class="section-header"><div class="section-title">${g.name}</div><div class="section-line"></div><div class="section-count">${g.items.length}</div></div>
     ${g.items.map(ing=>renderWeighCard(ing)).join('')}`).join('');
   updateWeighProgress();
 }
-
 function renderWeighCard(ing){
   const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" /></div>`:`<div class="ing-photo">🥫</div>`;
   const inputs=`<div class="tier-group"><label>Loose (${ing.looseUnit||'g'})</label><input type="number" min="0" step="0.1" id="loose_${ing.id}" placeholder="0" oninput="updateWeighProgress();" /></div>`;
   return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div></div></div>`;
 }
-
 function updateWeighProgress(){
   const looseIngs=ingredients.filter(i=>i.trackLoose);
   let filled=0;
-  looseIngs.forEach(ing=>{
-    const v=document.getElementById('loose_'+ing.id)?.value;
-    if(v!==''&&v!==undefined&&v!==null)filled++;
-  });
+  looseIngs.forEach(ing=>{const v=document.getElementById('loose_'+ing.id)?.value;if(v!==''&&v!==undefined&&v!==null)filled++;});
   const pct=looseIngs.length?Math.round(filled/looseIngs.length*100):0;
   document.getElementById('weigh-progress').style.width=pct+'%';
   document.getElementById('weigh-filled').textContent=filled;
 }
-
 function clearWeighInputs(){
-  ingredients.filter(i=>i.trackLoose).forEach(ing=>{
-    const el=document.getElementById('loose_'+ing.id);if(el)el.value='';
-  });
+  ingredients.filter(i=>i.trackLoose).forEach(ing=>{const el=document.getElementById('loose_'+ing.id);if(el)el.value='';});
   updateWeighProgress();
 }
 
-// ── Sites ──
-function populateSiteDropdown(){
-  const sel=document.getElementById('session-site');
-  const cur=sel.value;
-  sel.innerHTML='<option value="">Select site…</option>';
-  (settings.sites||[]).forEach(s=>{
-    const opt=document.createElement('option');
-    opt.value=s;opt.textContent=s;
-    sel.appendChild(opt);
-  });
-  if(cur)sel.value=cur;
-}
-function renderSitesList(){
-  const c=document.getElementById('sites-list');
-  if(!settings.sites||!settings.sites.length){c.innerHTML='<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No sites added yet.</div>';return;}
-  c.innerHTML=settings.sites.map((s,i)=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
-      <span style="font-size:14px;">${s}</span>
-      <button class="btn-sm btn-danger-sm" onclick="removeSite(${i})">✕</button>
-    </div>`).join('');
-}
-function addSite(){
-  const input=document.getElementById('new-site');
-  const val=input.value.trim();
-  if(!val)return;
-  if((settings.sites||[]).includes(val)){showToast('Site already exists');return;}
-  if(!settings.sites)settings.sites=[];
-  settings.sites.push(val);
-  localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));
-  input.value='';
-  populateSiteDropdown();
-  renderSitesList();
-  showToast(val+' added ✓');
-}
-function removeSite(i){
-  settings.sites.splice(i,1);
-  localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));
-  populateSiteDropdown();
-  renderSitesList();
-}
-
-// ── Submit (combines both tabs) ──
 async function submitCheck(){
   const dateVal=document.getElementById('session-date').value;
   const siteVal=document.getElementById('session-site').value;
   const staffVal=document.getElementById('session-staff').value.trim();
   const err=document.getElementById('err-count');
   const missing=[];
-  if(!dateVal)missing.push('date');
-  if(!siteVal)missing.push('site');
-  if(!staffVal)missing.push('staff name');
+  if(!dateVal)missing.push('date');if(!siteVal)missing.push('site');if(!staffVal)missing.push('staff name');
   if(missing.length){err.style.display='';err.textContent='Please fill in: '+missing.join(', ');return;}
   err.style.display='none';
   const now=new Date().toISOString();
@@ -644,27 +587,20 @@ async function submitCheck(){
     const caseNum=caseVal!==''?parseFloat(caseVal):'';
     const low=ing.minStock&&caseNum!==''?caseNum<ing.minStock:false;
     return{date:dateVal,site:siteVal,staff:staffVal,ingredient:ing.name,storage:ing.storage||'Dry Store',
-      cases:caseNum,
-      units:unitsVal!==''?parseFloat(unitsVal):'',unitsLabel:ing.unitLabel||'',
+      cases:caseNum,units:unitsVal!==''?parseFloat(unitsVal):'',unitsLabel:ing.unitLabel||'',
       loose:looseVal!==''?parseFloat(looseVal):'',looseUnit:ing.looseUnit||'',
       lowStock:low?'Yes':'No',savedAt:now};
   });
   stockChecks.unshift({id:uid(),date:dateVal,site:siteVal,staff:staffVal,savedAt:now,rows});
-  persistChecks();
-  showToast('Stock check saved ✓');
-  clearCountInputs();clearWeighInputs();
-  const url=settings.scriptUrl;
-  if(!url){updateSyncBadge('no-url');return;}
+  persistChecks();showToast('Stock check saved ✓');clearCountInputs();clearWeighInputs();
   updateSyncBadge('syncing');
   try{
-    const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'stockCheck',rows}),headers:{'Content-Type':'text/plain'}});
-    const json=await res.json();
+    const json=await api({action:'stockCheck',rows});
     updateSyncBadge(json.result==='success'?'synced':'error');
     setTimeout(()=>updateSyncBadge('ready'),4000);
   }catch(e){updateSyncBadge('error');setTimeout(()=>updateSyncBadge('ready'),4000);}
 }
 
-// ── Records ──
 function renderRecords(){
   const c=document.getElementById('records-container');
   if(!stockChecks.length){c.innerHTML='<div class="empty"><div style="font-size:32px;margin-bottom:10px;">📊</div>No stock checks submitted yet.</div>';return;}
@@ -676,8 +612,7 @@ function renderRecords(){
         <table class="record-table">
           <thead><tr><th>Ingredient</th><th>Cases</th><th>Units</th><th>Loose</th><th>Status</th></tr></thead>
           <tbody>${check.rows.map(r=>`<tr>
-            <td>${r.ingredient}</td>
-            <td>${r.cases!==''?r.cases:'—'}</td>
+            <td>${r.ingredient}</td><td>${r.cases!==''?r.cases:'—'}</td>
             <td>${r.units!==''?r.units+(r.unitsLabel?' '+r.unitsLabel:''):'—'}</td>
             <td>${r.loose!==''?r.loose+(r.looseUnit?' '+r.looseUnit:''):'—'}</td>
             <td class="${r.lowStock==='Yes'?'flag-low':'flag-ok'}">${r.lowStock==='Yes'?'⚠ Low':'✓ OK'}</td>
@@ -687,68 +622,63 @@ function renderRecords(){
   }).join('<hr style="border:none;border-top:1px solid var(--border);margin:0 0 20px;">');
 }
 
-// ── Setup list ──
 function renderSetupList(){
   const c=document.getElementById('setup-ing-list');
   if(!ingredients.length){c.innerHTML='<div class="empty" style="padding:32px 16px;">No ingredients yet — tap "+ Add new" to get started.</div>';return;}
   c.innerHTML=getGroups().map(g=>`
     <div class="section-header"><div class="section-title">${g.name}</div><div class="section-line"></div><div class="section-count">${g.items.length}</div></div>
     ${g.items.map(ing=>{
-      const tiers=['Case',ing.trackUnits?`Units (${ing.unitLabel||'units'})`:'',ing.trackLoose?`Loose (${ing.looseUnit||'g'})`:''].filter(Boolean).join(' · ');
+      const tiers=['Case',ing.trackUnits?`Units (${ing.unitLabel||'units'})`:''  ,ing.trackLoose?`Loose (${ing.looseUnit||'g'})`:''  ].filter(Boolean).join(' · ');
       return`<div class="ing-setup-item">
-        <div class="ing-setup-photo" onclick="openEdit('${ing.id}')">${ing.photo?`<img src="${ing.photo}" />`:'🥫'}</div>
+        <div class="ing-setup-photo" onclick="openEdit('${ing.id}')">${ing.photo?`<img src="${ing.photo}" />`:\'🥫'}</div>
         <div class="ing-setup-body"><div class="ing-setup-name">${ing.name}</div><div class="ing-setup-meta">${tiers}${ing.minStock?' · min '+ing.minStock+' cases':''}</div></div>
         <div class="ing-setup-actions"><button class="btn-sm" onclick="openEdit('${ing.id}')">Edit</button><button class="btn-sm btn-danger-sm" onclick="confirmDelete('${ing.id}')">✕</button></div>
       </div>`;
     }).join('')}`).join('');
 }
 
-// ── Add ingredient ──
-function saveIngredient(){
+async function saveIngredient(){
   const name=document.getElementById('s-name').value.trim();
   const err=document.getElementById('err-add');
   if(!name){err.style.display='';err.textContent='Please enter an ingredient name.';return;}
   err.style.display='none';
-  const ing={
-    id:uid(),name,
-    storage:document.getElementById('s-storage').value,
+  const btn=document.getElementById('save-ing-btn');
+  btn.textContent='Saving…';btn.disabled=true;
+  let photoUrl=null;
+  if(photoData.s){
+    try{const r=await api({action:'uploadPhoto',name,imageBase64:photoData.s});if(r.url)photoUrl=r.url;}catch(e){}
+  }
+  const ing={id:uid(),name,storage:document.getElementById('s-storage').value,
     minStock:parseFloat(document.getElementById('s-min').value)||null,
     trackUnits:tierState.s.units,
     unitLabel:tierState.s.units?document.getElementById('s-unit-label').value.trim()||'units':null,
     trackLoose:tierState.s.loose,
     looseUnit:tierState.s.loose?document.getElementById('s-loose-unit').value:null,
-    photo:photoData.s||null
-  };
-  ingredients.push(ing);persist();
-  // reset
-  document.getElementById('s-name').value='';
-  document.getElementById('s-min').value='';
+    photo:photoUrl};
+  try{
+    const r=await api({action:'saveIngredient',ingredient:ing});
+    if(r.result==='success'){ingredients.push(ing);showToast(name+' added ✓');}
+    else{err.style.display='';err.textContent='Failed to save — please try again.';}
+  }catch(e){err.style.display='';err.textContent='No connection. Check internet and try again.';}
+  btn.textContent='Save ingredient';btn.disabled=false;
+  document.getElementById('s-name').value='';document.getElementById('s-min').value='';
   document.getElementById('s-storage').value='Dry Store';
-  if(tierState.s.units)tierToggle('s','units');
-  if(tierState.s.loose)tierToggle('s','loose');
+  if(tierState.s.units)tierToggle('s','units');if(tierState.s.loose)tierToggle('s','loose');
   document.getElementById('s-unit-label').value='';
-  photoData.s=null;
-  document.getElementById('s-photo-preview').style.display='none';
-  document.getElementById('s-photo-prompt').style.display='';
-  document.getElementById('s-photo-file').value='';
-  showToast(name+' added ✓');
-  showSetupTab('ingredients');
-  renderCount();
+  photoData.s=null;document.getElementById('s-photo-preview').style.display='none';
+  document.getElementById('s-photo-prompt').style.display='';document.getElementById('s-photo-file').value='';
+  showSetupTab('ingredients');renderSetupList();renderCount();
 }
 
-// ── Edit ──
 function openEdit(id){
   const ing=ingredients.find(i=>i.id===id);if(!ing)return;
-  editingId=id;photoData.e=ing.photo||null;
+  editingId=id;photoData.e=null;
   document.getElementById('e-name').value=ing.name;
   document.getElementById('e-storage').value=ing.storage||'Dry Store';
   document.getElementById('e-min').value=ing.minStock||'';
-  // set tiers
-  setTier('e','units',!!ing.trackUnits);
-  setTier('e','loose',!!ing.trackLoose);
+  setTier('e','units',!!ing.trackUnits);setTier('e','loose',!!ing.trackLoose);
   if(ing.trackUnits)document.getElementById('e-unit-label').value=ing.unitLabel||'';
   if(ing.trackLoose)document.getElementById('e-loose-unit').value=ing.looseUnit||'g';
-  // photo
   const prev=document.getElementById('e-photo-preview');
   if(ing.photo){prev.src=ing.photo;prev.style.display='block';document.getElementById('e-photo-prompt').style.display='none';}
   else{prev.style.display='none';document.getElementById('e-photo-prompt').style.display='';}
@@ -757,49 +687,87 @@ function openEdit(id){
 }
 function maybeCloseModal(e){if(e.target===document.getElementById('edit-modal'))closeModal();}
 function closeModal(){document.getElementById('edit-modal').style.display='none';editingId=null;}
-function saveEdit(){
+async function saveEdit(){
   const name=document.getElementById('e-name').value.trim();
   const err=document.getElementById('err-edit');
   if(!name){err.style.display='';err.textContent='Name cannot be empty.';return;}
   err.style.display='none';
   const idx=ingredients.findIndex(i=>i.id===editingId);if(idx<0)return;
-  ingredients[idx]={...ingredients[idx],name,
-    storage:document.getElementById('e-storage').value,
+  const saveBtn=document.querySelector('#edit-modal .btn-primary');
+  saveBtn.textContent='Saving…';saveBtn.disabled=true;
+  let photoUrl=ingredients[idx].photo||null;
+  if(photoData.e){
+    try{const r=await api({action:'uploadPhoto',name,imageBase64:photoData.e});if(r.url)photoUrl=r.url;}catch(e){}
+  }
+  const updated={...ingredients[idx],name,storage:document.getElementById('e-storage').value,
     minStock:parseFloat(document.getElementById('e-min').value)||null,
     trackUnits:tierState.e.units,
     unitLabel:tierState.e.units?document.getElementById('e-unit-label').value.trim()||'units':null,
     trackLoose:tierState.e.loose,
     looseUnit:tierState.e.loose?document.getElementById('e-loose-unit').value:null,
-    photo:photoData.e
-  };
-  persist();closeModal();renderSetupList();renderCount();showToast('Saved ✓');
+    photo:photoUrl};
+  try{
+    const r=await api({action:'saveIngredient',ingredient:updated});
+    if(r.result==='success'){ingredients[idx]=updated;closeModal();renderSetupList();renderCount();showToast('Saved ✓');}
+    else{err.style.display='';err.textContent='Failed to save.';}
+  }catch(e){err.style.display='';err.textContent='No connection.';}
+  saveBtn.textContent='Save changes';saveBtn.disabled=false;
 }
 
-// ── Delete / Confirm ──
 function confirmDelete(id){
   const ing=ingredients.find(i=>i.id===id);
   document.getElementById('confirm-title').textContent='Delete ingredient?';
-  document.getElementById('confirm-msg').textContent=`This will remove "${ing?.name}" from the stock check list.`;
+  document.getElementById('confirm-msg').textContent=`This will remove "${ing?.name}" from all devices.`;
   document.getElementById('confirm-ok-btn').textContent='Delete';
-  confirmCb=()=>{ingredients=ingredients.filter(i=>i.id!==id);persist();renderSetupList();renderCount();showToast('Deleted');};
+  confirmCb=async()=>{
+    try{await api({action:'deleteIngredient',id});}catch(e){}
+    ingredients=ingredients.filter(i=>i.id!==id);
+    renderSetupList();renderCount();showToast('Deleted');
+  };
   document.getElementById('confirm-overlay').style.display='flex';
 }
 function confirmClearAll(){
-  document.getElementById('confirm-title').textContent='Clear all data?';
-  document.getElementById('confirm-msg').textContent='This will delete all ingredients and stock check history from this device.';
-  document.getElementById('confirm-ok-btn').textContent='Clear all';
-  confirmCb=()=>{ingredients=[];stockChecks=[];persist();persistChecks();renderSetupList();renderCount();renderRecords();showToast('Cleared');};
+  document.getElementById('confirm-title').textContent='Clear local history?';
+  document.getElementById('confirm-msg').textContent='This clears stock check history from this device only. Ingredients and sites stay in Sheets.';
+  document.getElementById('confirm-ok-btn').textContent='Clear';
+  confirmCb=()=>{stockChecks=[];persistChecks();renderRecords();showToast('Local history cleared');};
   document.getElementById('confirm-overlay').style.display='flex';
 }
 function confirmOk(){document.getElementById('confirm-overlay').style.display='none';if(confirmCb)confirmCb();confirmCb=null;}
 function confirmCancel(){document.getElementById('confirm-overlay').style.display='none';confirmCb=null;}
 
-function saveSettings(){
-  settings.scriptUrl=document.getElementById('s-script-url').value.trim();
-  localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));
-  updateSyncBadge(settings.scriptUrl?'ready':'no-url');
-  showToast('Settings saved ✓');
+function populateSiteDropdown(){
+  const sel=document.getElementById('session-site');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Select site…</option>';
+  (settings.sites||[]).forEach(s=>{const opt=document.createElement('option');opt.value=s;opt.textContent=s;sel.appendChild(opt);});
+  if(cur)sel.value=cur;
 }
+function renderSitesList(){
+  const c=document.getElementById('sites-list');
+  if(!settings.sites||!settings.sites.length){c.innerHTML='<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No sites added yet.</div>';return;}
+  c.innerHTML=settings.sites.map((s,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:14px;">${s}</span>
+      <button class="btn-sm btn-danger-sm" onclick="removeSite(${i})">✕</button>
+    </div>`).join('');
+}
+async function addSite(){
+  const input=document.getElementById('new-site');
+  const val=input.value.trim();if(!val)return;
+  if((settings.sites||[]).includes(val)){showToast('Site already exists');return;}
+  if(!settings.sites)settings.sites=[];
+  settings.sites.push(val);
+  try{await api({action:'saveSites',sites:settings.sites});}catch(e){}
+  saveLocalSettings();input.value='';
+  populateSiteDropdown();renderSitesList();showToast(val+' added ✓');
+}
+async function removeSite(i){
+  settings.sites.splice(i,1);
+  try{await api({action:'saveSites',sites:settings.sites});}catch(e){}
+  saveLocalSettings();populateSiteDropdown();renderSitesList();
+}
+function saveSettings(){saveLocalSettings();showToast('Settings saved ✓');}
 
 load();
 </script>
