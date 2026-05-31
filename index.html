@@ -158,28 +158,61 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="sync-badge" id="sync-status">● sheets</div>
 </header>
 <div class="tabs">
-  <button class="tab active" onclick="showTab('check')" id="tab-check">Weekly Check</button>
+  <button class="tab active" onclick="showTab('count')" id="tab-count">Count</button>
+  <button class="tab" onclick="showTab('weigh')" id="tab-weigh">Weighing</button>
   <button class="tab" onclick="showTab('records')" id="tab-records">Records</button>
   <button class="tab" onclick="showTab('setup')" id="tab-setup">Setup</button>
 </div>
 <div class="content">
 
-  <!-- ── STOCK CHECK ── -->
-  <div id="panel-check">
-    <div id="check-empty" class="empty" style="display:none;"><div style="font-size:32px;margin-bottom:10px;">📋</div>No ingredients set up yet — go to Setup to add some.</div>
-    <div id="check-content" style="display:none;">
+  <!-- ── COUNT (Cases + Units) ── -->
+  <div id="panel-count">
+    <div id="count-empty" class="empty" style="display:none;"><div style="font-size:32px;margin-bottom:10px;">📋</div>No ingredients set up yet — go to Setup to add some.</div>
+    <div id="count-content" style="display:none;">
+
+      <!-- Session header -->
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-label">Session details</div>
+        <div class="field-row">
+          <div class="field"><label>Date</label><input type="date" id="session-date" /></div>
+          <div class="field"><label>Site</label>
+            <select id="session-site">
+              <option value="">Select site…</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Staff name</label><input type="text" id="session-staff" placeholder="Your name" /></div>
+      </div>
+
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-        <div style="font-size:13px;color:var(--text-muted);">Week of <strong id="check-week" style="color:var(--text);"></strong></div>
-        <button class="btn-sm" onclick="clearAllInputs()">Clear all</button>
+        <div style="font-size:13px;color:var(--text-muted);">Week of <strong id="count-week" style="color:var(--text);"></strong></div>
+        <button class="btn-sm" onclick="clearCountInputs()">Clear all</button>
       </div>
-      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-bar"><div class="progress-fill" id="count-progress" style="width:0%"></div></div>
       <div class="stock-summary">
-        <div class="summary-stat"><strong id="stat-filled">0</strong> / <span id="stat-total">0</span> filled</div>
-        <div class="summary-stat" id="stat-low-wrap" style="display:none;"><strong id="stat-low" style="color:var(--warn-text);">0</strong> low stock</div>
+        <div class="summary-stat"><strong id="count-filled">0</strong> / <span id="count-total">0</span> filled</div>
+        <div class="summary-stat" id="count-low-wrap" style="display:none;"><strong id="count-low" style="color:var(--warn-text);">0</strong> low stock</div>
       </div>
-      <div id="check-sections"></div>
-      <div class="err" id="err-check"></div>
-      <button class="btn btn-primary" onclick="submitStockCheck()">Submit stock check</button>
+      <div id="count-sections"></div>
+      <div class="err" id="err-count"></div>
+      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="submitCheck()">Submit stock check</button>
+      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:4px;">Submits both count and weighing data together</p>
+    </div>
+  </div>
+
+  <!-- ── WEIGHING (Loose only) ── -->
+  <div id="panel-weigh" style="display:none;">
+    <div id="weigh-empty" class="empty" style="display:none;"><div style="font-size:32px;margin-bottom:10px;">⚖️</div>No ingredients have loose tracking set up.<br><span style="font-size:13px;">Enable it in Setup for the relevant ingredients.</span></div>
+    <div id="weigh-content" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:13px;color:var(--text-muted);">Week of <strong id="weigh-week" style="color:var(--text);"></strong></div>
+        <button class="btn-sm" onclick="clearWeighInputs()">Clear all</button>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="weigh-progress" style="width:0%"></div></div>
+      <div class="stock-summary">
+        <div class="summary-stat"><strong id="weigh-filled">0</strong> / <span id="weigh-total">0</span> weighed</div>
+      </div>
+      <div id="weigh-sections"></div>
     </div>
   </div>
 
@@ -273,6 +306,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <!-- Settings -->
     <div id="setup-settings" style="display:none;">
       <div class="card">
+        <div class="card-label">Sites</div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Add each site that will use this form.</p>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <input type="text" id="new-site" placeholder="e.g. Soho Kitchen" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:var(--font);outline:none;" onkeydown="if(event.key==='Enter')addSite()" />
+          <button class="btn-sm" style="background:var(--accent);color:var(--accent-fg);border-color:var(--accent);padding:10px 16px;" onclick="addSite()">Add</button>
+        </div>
+        <div id="sites-list"></div>
+      </div>
+      <div class="card">
         <div class="card-label">Google Sheets sync</div>
         <div class="field"><label>Apps Script URL</label><input type="text" id="s-script-url" placeholder="https://script.google.com/macros/s/..." /></div>
         <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
@@ -356,7 +398,7 @@ const SK_INGS='stock_ingredients_v2';
 const SK_CHECKS='stock_checks_v1';
 const SK_SETTINGS='stock_settings_v1';
 
-let ingredients=[], stockChecks=[], settings={scriptUrl:''};
+let ingredients=[], stockChecks=[], settings={scriptUrl:'',sites:[]};
 let editingId=null, confirmCb=null;
 let tierState={s:{units:false,loose:false}, e:{units:false,loose:false}};
 let photoData={s:null, e:null};
@@ -364,14 +406,17 @@ let photoData={s:null, e:null};
 function load(){
   try{const d=localStorage.getItem(SK_INGS);if(d)ingredients=JSON.parse(d);}catch(e){}
   try{const d=localStorage.getItem(SK_CHECKS);if(d)stockChecks=JSON.parse(d);}catch(e){}
-  try{const d=localStorage.getItem(SK_SETTINGS);if(d)settings=JSON.parse(d);}catch(e){}
+  try{const d=localStorage.getItem(SK_SETTINGS);if(d)settings={scriptUrl:'',sites:[],...JSON.parse(d)};}catch(e){}
   if(!settings.scriptUrl){
-    settings.scriptUrl='https://script.google.com/macros/s/AKfycbwugTSSGlBx4H6DI9qapj8on1IytrmVDvtLtCZphhHiYeUBDeylepFkjuupRlAEGXoPtw/exec';
+    settings.scriptUrl='https://script.google.com/macros/s/AKfycbx3_TkMTNhumFGA-oBXRgBrfiQ3aLjHEx_wbhwgESHk1PWHbwH9OzEsAQQVG5BtyGcYzA/exec';
     localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));
   }
   document.getElementById('s-script-url').value=settings.scriptUrl||'';
+  document.getElementById('session-date').valueAsDate=new Date();
+  populateSiteDropdown();
+  renderSitesList();
   updateSyncBadge(settings.scriptUrl?'ready':'no-url');
-  renderCheck();
+  renderCount();
   renderSetupList();
 }
 function persist(){localStorage.setItem(SK_INGS,JSON.stringify(ingredients));}
@@ -391,12 +436,13 @@ function updateSyncBadge(state){
 
 // ── Tabs ──
 function showTab(t){
-  ['check','records','setup'].forEach(p=>{
+  ['count','weigh','records','setup'].forEach(p=>{
     document.getElementById('panel-'+p).style.display=p===t?'':'none';
     document.getElementById('tab-'+p).classList.toggle('active',p===t);
   });
   if(t==='records')renderRecords();
-  if(t==='check')renderCheck();
+  if(t==='count')renderCount();
+  if(t==='weigh')renderWeigh();
 }
 function showSetupTab(t){
   ['ingredients','add','settings'].forEach(p=>{
@@ -439,34 +485,27 @@ function getGroups(){
   return order.map(s=>({name:s,items:g[s]})).filter(g=>g.items.length>0);
 }
 
-// ── Stock Check ──
-function renderCheck(){
+// ── Count tab (Cases + Units) ──
+function renderCount(){
   const total=ingredients.length;
-  if(!total){document.getElementById('check-empty').style.display='';document.getElementById('check-content').style.display='none';return;}
-  document.getElementById('check-empty').style.display='none';
-  document.getElementById('check-content').style.display='';
-  document.getElementById('check-week').textContent=weekOf();
-  document.getElementById('stat-total').textContent=total;
-  const sections=document.getElementById('check-sections');
-  sections.innerHTML=getGroups().map(g=>`
+  if(!total){document.getElementById('count-empty').style.display='';document.getElementById('count-content').style.display='none';return;}
+  document.getElementById('count-empty').style.display='none';
+  document.getElementById('count-content').style.display='';
+  document.getElementById('count-week').textContent=weekOf();
+  document.getElementById('count-total').textContent=total;
+  document.getElementById('count-sections').innerHTML=getGroups().map(g=>`
     <div class="section-header"><div class="section-title">${g.name}</div><div class="section-line"></div><div class="section-count">${g.items.length}</div></div>
-    ${g.items.map(ing=>renderIngCard(ing)).join('')}`).join('');
-  updateProgress();
+    ${g.items.map(ing=>renderCountCard(ing)).join('')}`).join('');
+  updateCountProgress();
 }
 
-function renderIngCard(ing){
+function renderCountCard(ing){
   const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" /></div>`:`<div class="ing-photo">🥫</div>`;
-  // Case — always
-  let inputs=`<div class="tier-group"><label>Case</label><input type="number" min="0" step="1" id="case_${ing.id}" placeholder="0" oninput="checkLow('${ing.id}');updateProgress();" /></div>`;
-  // Units — optional
+  let inputs=`<div class="tier-group"><label>Cases</label><input type="number" min="0" step="1" id="case_${ing.id}" placeholder="0" oninput="checkLow('${ing.id}');updateCountProgress();" /></div>`;
   if(ing.trackUnits){
-    inputs+=`<div class="tier-group"><label>Units (${ing.unitLabel||'units'})</label><input type="number" min="0" step="1" id="units_${ing.id}" placeholder="0" oninput="updateProgress();" /></div>`;
+    inputs+=`<div class="tier-group"><label>Units (${ing.unitLabel||'units'})</label><input type="number" min="0" step="1" id="units_${ing.id}" placeholder="0" oninput="updateCountProgress();" /></div>`;
   }
-  // Loose — optional
-  if(ing.trackLoose){
-    inputs+=`<div class="tier-group"><label>Loose (${ing.looseUnit||'g'})</label><input type="number" min="0" step="0.1" id="loose_${ing.id}" placeholder="0" oninput="updateProgress();" /></div>`;
-  }
-  return `<div class="ing-card" id="card_${ing.id}">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div><div class="low-stock-flag" id="flag_${ing.id}">⚠ Low stock</div></div></div>`;
+  return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div><div class="low-stock-flag" id="flag_${ing.id}">⚠ Low stock</div></div></div>`;
 }
 
 function checkLow(id){
@@ -476,7 +515,8 @@ function checkLow(id){
   const flag=document.getElementById('flag_'+id);
   if(flag)flag.classList.toggle('visible',val<ing.minStock);
 }
-function updateProgress(){
+
+function updateCountProgress(){
   let filled=0,low=0;
   ingredients.forEach(ing=>{
     const v=document.getElementById('case_'+ing.id)?.value;
@@ -484,39 +524,135 @@ function updateProgress(){
     if(ing.minStock&&(parseFloat(v)||0)<ing.minStock)low++;
   });
   const pct=ingredients.length?Math.round(filled/ingredients.length*100):0;
-  document.getElementById('progress-fill').style.width=pct+'%';
-  document.getElementById('stat-filled').textContent=filled;
-  const lw=document.getElementById('stat-low-wrap');
+  document.getElementById('count-progress').style.width=pct+'%';
+  document.getElementById('count-filled').textContent=filled;
+  const lw=document.getElementById('count-low-wrap');
   lw.style.display=low>0?'':'none';
-  document.getElementById('stat-low').textContent=low;
+  document.getElementById('count-low').textContent=low;
 }
-function clearAllInputs(){
+
+function clearCountInputs(){
   ingredients.forEach(ing=>{
-    ['case_','units_','loose_'].forEach(p=>{const el=document.getElementById(p+ing.id);if(el)el.value='';});
+    ['case_','units_'].forEach(p=>{const el=document.getElementById(p+ing.id);if(el)el.value='';});
     const f=document.getElementById('flag_'+ing.id);if(f)f.classList.remove('visible');
   });
-  updateProgress();
+  updateCountProgress();
 }
-async function submitStockCheck(){
+
+// ── Weigh tab (Loose only) ──
+function renderWeigh(){
+  const looseIngs=ingredients.filter(i=>i.trackLoose);
+  if(!looseIngs.length){document.getElementById('weigh-empty').style.display='';document.getElementById('weigh-content').style.display='none';return;}
+  document.getElementById('weigh-empty').style.display='none';
+  document.getElementById('weigh-content').style.display='';
+  document.getElementById('weigh-week').textContent=weekOf();
+  document.getElementById('weigh-total').textContent=looseIngs.length;
+  // group only those with loose
+  const order=['Dry Store','Fridge','Freezer'];
+  const groups={};order.forEach(s=>groups[s]=[]);
+  looseIngs.forEach(i=>{const s=i.storage||'Dry Store';if(!groups[s])groups[s]=[];groups[s].push(i);});
+  const filteredGroups=order.map(s=>({name:s,items:groups[s]})).filter(g=>g.items.length>0);
+  document.getElementById('weigh-sections').innerHTML=filteredGroups.map(g=>`
+    <div class="section-header"><div class="section-title">${g.name}</div><div class="section-line"></div><div class="section-count">${g.items.length}</div></div>
+    ${g.items.map(ing=>renderWeighCard(ing)).join('')}`).join('');
+  updateWeighProgress();
+}
+
+function renderWeighCard(ing){
+  const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" /></div>`:`<div class="ing-photo">🥫</div>`;
+  const inputs=`<div class="tier-group"><label>Loose (${ing.looseUnit||'g'})</label><input type="number" min="0" step="0.1" id="loose_${ing.id}" placeholder="0" oninput="updateWeighProgress();" /></div>`;
+  return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div></div></div>`;
+}
+
+function updateWeighProgress(){
+  const looseIngs=ingredients.filter(i=>i.trackLoose);
+  let filled=0;
+  looseIngs.forEach(ing=>{
+    const v=document.getElementById('loose_'+ing.id)?.value;
+    if(v!==''&&v!==undefined&&v!==null)filled++;
+  });
+  const pct=looseIngs.length?Math.round(filled/looseIngs.length*100):0;
+  document.getElementById('weigh-progress').style.width=pct+'%';
+  document.getElementById('weigh-filled').textContent=filled;
+}
+
+function clearWeighInputs(){
+  ingredients.filter(i=>i.trackLoose).forEach(ing=>{
+    const el=document.getElementById('loose_'+ing.id);if(el)el.value='';
+  });
+  updateWeighProgress();
+}
+
+// ── Sites ──
+function populateSiteDropdown(){
+  const sel=document.getElementById('session-site');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Select site…</option>';
+  (settings.sites||[]).forEach(s=>{
+    const opt=document.createElement('option');
+    opt.value=s;opt.textContent=s;
+    sel.appendChild(opt);
+  });
+  if(cur)sel.value=cur;
+}
+function renderSitesList(){
+  const c=document.getElementById('sites-list');
+  if(!settings.sites||!settings.sites.length){c.innerHTML='<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No sites added yet.</div>';return;}
+  c.innerHTML=settings.sites.map((s,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:14px;">${s}</span>
+      <button class="btn-sm btn-danger-sm" onclick="removeSite(${i})">✕</button>
+    </div>`).join('');
+}
+function addSite(){
+  const input=document.getElementById('new-site');
+  const val=input.value.trim();
+  if(!val)return;
+  if((settings.sites||[]).includes(val)){showToast('Site already exists');return;}
+  if(!settings.sites)settings.sites=[];
+  settings.sites.push(val);
+  localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));
+  input.value='';
+  populateSiteDropdown();
+  renderSitesList();
+  showToast(val+' added ✓');
+}
+function removeSite(i){
+  settings.sites.splice(i,1);
+  localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));
+  populateSiteDropdown();
+  renderSitesList();
+}
+
+// ── Submit (combines both tabs) ──
+async function submitCheck(){
+  const dateVal=document.getElementById('session-date').value;
+  const siteVal=document.getElementById('session-site').value;
+  const staffVal=document.getElementById('session-staff').value.trim();
+  const err=document.getElementById('err-count');
+  const missing=[];
+  if(!dateVal)missing.push('date');
+  if(!siteVal)missing.push('site');
+  if(!staffVal)missing.push('staff name');
+  if(missing.length){err.style.display='';err.textContent='Please fill in: '+missing.join(', ');return;}
+  err.style.display='none';
   const now=new Date().toISOString();
-  const dateStr=now.slice(0,10);
   const rows=ingredients.map(ing=>{
     const caseVal=document.getElementById('case_'+ing.id)?.value;
     const unitsVal=ing.trackUnits?document.getElementById('units_'+ing.id)?.value:'';
     const looseVal=ing.trackLoose?document.getElementById('loose_'+ing.id)?.value:'';
     const caseNum=caseVal!==''?parseFloat(caseVal):'';
     const low=ing.minStock&&caseNum!==''?caseNum<ing.minStock:false;
-    return{date:dateStr,ingredient:ing.name,storage:ing.storage||'Dry Store',
+    return{date:dateVal,site:siteVal,staff:staffVal,ingredient:ing.name,storage:ing.storage||'Dry Store',
       cases:caseNum,
       units:unitsVal!==''?parseFloat(unitsVal):'',unitsLabel:ing.unitLabel||'',
       loose:looseVal!==''?parseFloat(looseVal):'',looseUnit:ing.looseUnit||'',
       lowStock:low?'Yes':'No',savedAt:now};
   });
-  stockChecks.unshift({id:uid(),date:dateStr,savedAt:now,rows});
+  stockChecks.unshift({id:uid(),date:dateVal,site:siteVal,staff:staffVal,savedAt:now,rows});
   persistChecks();
   showToast('Stock check saved ✓');
-  clearAllInputs();
-  document.getElementById('err-check').style.display='none';
+  clearCountInputs();clearWeighInputs();
   const url=settings.scriptUrl;
   if(!url){updateSyncBadge('no-url');return;}
   updateSyncBadge('syncing');
@@ -535,7 +671,7 @@ function renderRecords(){
   c.innerHTML=stockChecks.map(check=>{
     const low=check.rows.filter(r=>r.lowStock==='Yes').length;
     return`<div class="record-group">
-      <div class="record-header"><div>Week of ${weekOf(check.date)}</div><div class="date">${fmtDate(check.date)} · ${check.rows.length} items${low?` · <span style="color:var(--warn-text)">${low} low</span>`:''}</div></div>
+      <div class="record-header"><div>Week of ${weekOf(check.date)}</div><div class="date">${fmtDate(check.date)}${check.site?' · '+check.site:''}${check.staff?' · '+check.staff:''} · ${check.rows.length} items${low?` · <span style="color:var(--warn-text)">${low} low</span>`:''}</div></div>
       <div class="card" style="padding:0;overflow:hidden;">
         <table class="record-table">
           <thead><tr><th>Ingredient</th><th>Cases</th><th>Units</th><th>Loose</th><th>Status</th></tr></thead>
@@ -597,7 +733,7 @@ function saveIngredient(){
   document.getElementById('s-photo-file').value='';
   showToast(name+' added ✓');
   showSetupTab('ingredients');
-  renderCheck();
+  renderCount();
 }
 
 // ── Edit ──
@@ -636,7 +772,7 @@ function saveEdit(){
     looseUnit:tierState.e.loose?document.getElementById('e-loose-unit').value:null,
     photo:photoData.e
   };
-  persist();closeModal();renderSetupList();renderCheck();showToast('Saved ✓');
+  persist();closeModal();renderSetupList();renderCount();showToast('Saved ✓');
 }
 
 // ── Delete / Confirm ──
@@ -645,20 +781,19 @@ function confirmDelete(id){
   document.getElementById('confirm-title').textContent='Delete ingredient?';
   document.getElementById('confirm-msg').textContent=`This will remove "${ing?.name}" from the stock check list.`;
   document.getElementById('confirm-ok-btn').textContent='Delete';
-  confirmCb=()=>{ingredients=ingredients.filter(i=>i.id!==id);persist();renderSetupList();renderCheck();showToast('Deleted');};
+  confirmCb=()=>{ingredients=ingredients.filter(i=>i.id!==id);persist();renderSetupList();renderCount();showToast('Deleted');};
   document.getElementById('confirm-overlay').style.display='flex';
 }
 function confirmClearAll(){
   document.getElementById('confirm-title').textContent='Clear all data?';
   document.getElementById('confirm-msg').textContent='This will delete all ingredients and stock check history from this device.';
   document.getElementById('confirm-ok-btn').textContent='Clear all';
-  confirmCb=()=>{ingredients=[];stockChecks=[];persist();persistChecks();renderSetupList();renderCheck();renderRecords();showToast('Cleared');};
+  confirmCb=()=>{ingredients=[];stockChecks=[];persist();persistChecks();renderSetupList();renderCount();renderRecords();showToast('Cleared');};
   document.getElementById('confirm-overlay').style.display='flex';
 }
 function confirmOk(){document.getElementById('confirm-overlay').style.display='none';if(confirmCb)confirmCb();confirmCb=null;}
 function confirmCancel(){document.getElementById('confirm-overlay').style.display='none';confirmCb=null;}
 
-// ── Settings ──
 function saveSettings(){
   settings.scriptUrl=document.getElementById('s-script-url').value.trim();
   localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));
