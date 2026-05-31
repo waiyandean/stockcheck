@@ -630,7 +630,7 @@ function renderSetupList(){
     ${g.items.map(ing=>{
       const tiers=['Case',ing.trackUnits?`Units (${ing.unitLabel||'units'})`:''  ,ing.trackLoose?`Loose (${ing.looseUnit||'g'})`:''  ].filter(Boolean).join(' · ');
       return`<div class="ing-setup-item">
-        <div class="ing-setup-photo" onclick="openEdit('${ing.id}')">${ing.photo?`<img src="${ing.photo}" />`:\'🥫'}</div>
+        <div class="ing-setup-photo" onclick="openEdit('${ing.id}')">${ing.photo?`<img src="${ing.photo}" />`:'🥫'}</div>
         <div class="ing-setup-body"><div class="ing-setup-name">${ing.name}</div><div class="ing-setup-meta">${tiers}${ing.minStock?' · min '+ing.minStock+' cases':''}</div></div>
         <div class="ing-setup-actions"><button class="btn-sm" onclick="openEdit('${ing.id}')">Edit</button><button class="btn-sm btn-danger-sm" onclick="confirmDelete('${ing.id}')">✕</button></div>
       </div>`;
