@@ -11,6 +11,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Stock Check" />
 <meta name="theme-color" content="#1a1916" />
+<link rel="apple-touch-icon" href="sc-apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="sc-icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="sc-icon-512.png" />
 <style>
 :root {
   --bg:#f5f4f0; --surface:#fff; --border:#e0ddd6; --border-strong:#c8c4bb;
@@ -396,7 +399,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <script>
 const SK_CHECKS='stock_checks_v1';
 const SK_SETTINGS='stock_settings_v1';
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyo_au1FHsSc9c_RSfP30EYnn3bbRYXREiUCvUP3kPqP91ccW16CVuiY5x51lxwLm5SAQ/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx8kfDDv3Mc5wNbzbpOXmSpNBqkdHmij4ZLMVsnWH8BbH-Gtyn6-NRRqc4kSX9cHr9Xdg/exec';
 
 let ingredients=[], stockChecks=[], settings={scriptUrl:SCRIPT_URL,sites:[]};
 let editingId=null, confirmCb=null;
