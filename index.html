@@ -152,9 +152,57 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-fg);padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;white-space:nowrap;}
 .toast.show{opacity:1;}
+/* Session picker */
+.session-overlay{position:fixed;inset:0;background:var(--bg);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.session-heading{font-size:22px;font-weight:500;text-align:center;margin-bottom:6px;}
+.session-sub{font-size:14px;color:var(--text-muted);text-align:center;margin-bottom:28px;}
+.session-fields{width:100%;max-width:360px;margin-bottom:24px;}
+.session-fields .field{margin-bottom:12px;}
+.session-fields .field label{display:block;font-size:12px;font-family:monospace;color:var(--text-muted);margin-bottom:5px;letter-spacing:.03em;}
+.session-fields .field input,.session-fields .field select{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;appearance:none;-webkit-appearance:none;}
+.session-fields .field input:focus,.session-fields .field select:focus{border-color:var(--accent);}
+.session-fields .field select{background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="%237a776e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>');background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+.session-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:360px;}
+.session-type-btn{padding:20px 14px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);font-family:var(--font);cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .15s;}
+.session-type-btn:active{background:var(--accent);border-color:var(--accent);}
+.session-type-btn .s-icon{font-size:28px;}
+.session-type-btn .s-title{font-size:14px;font-weight:500;color:var(--text);}
+.session-type-btn .s-sub{font-size:11px;color:var(--text-muted);line-height:1.4;}
+.session-type-btn:active .s-title,.session-type-btn:active .s-sub{color:var(--accent-fg);}
+.session-err{color:var(--danger-text);font-size:13px;margin-bottom:16px;display:none;text-align:center;}
+.session-banner{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;flex-wrap:wrap;}
+.session-banner-info{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.session-chip{font-family:monospace;font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 9px;color:var(--text-muted);}
+.type-full{background:var(--success-bg);color:var(--success-text);border:1px solid #b2d9b2;border-radius:20px;font-size:11px;font-family:monospace;padding:3px 9px;}
+.type-products{background:var(--warn-bg);color:var(--warn-text);border:1px solid #f0d88a;border-radius:20px;font-size:11px;font-family:monospace;padding:3px 9px;}
 </style>
-</head>
 <body>
+
+<!-- ── SESSION PICKER ── -->
+<div id="session-overlay" class="session-overlay">
+  <div style="font-size:15px;color:var(--text-muted);margin-bottom:32px;font-weight:400;">Stock <strong style="color:var(--text);">Check</strong></div>
+  <div class="session-heading">Start a session</div>
+  <div class="session-sub">Fill in your details, then choose what you're counting today.</div>
+  <div class="session-fields">
+    <div class="field"><label>Date</label><input type="date" id="picker-date"/></div>
+    <div class="field"><label>Site</label><select id="picker-site"><option value="">Select site…</option></select></div>
+    <div class="field"><label>Staff name</label><input type="text" id="picker-staff" placeholder="Your name"/></div>
+  </div>
+  <div class="session-err" id="session-err">Please fill in all fields above.</div>
+  <div class="session-type-grid">
+    <button class="session-type-btn" onclick="startSession('full')">
+      <span class="s-icon">📋</span>
+      <span class="s-title">Full count</span>
+      <span class="s-sub">Ingredients + products — weekly</span>
+    </button>
+    <button class="session-type-btn" onclick="startSession('products')">
+      <span class="s-icon">📦</span>
+      <span class="s-title">Products only</span>
+      <span class="s-sub">Finished goods count — daily</span>
+    </button>
+  </div>
+  <button onclick="openSetupFromPicker()" style="margin-top:20px;background:none;border:none;font-family:var(--font);font-size:13px;color:var(--text-muted);cursor:pointer;text-decoration:underline;">⚙ Setup & manage ingredients</button>
+</div>
 
 <header class="app-header">
   <div class="app-title">Stock <span>Check</span></div>
@@ -162,6 +210,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </header>
 <div class="tabs">
   <button class="tab active" onclick="showTab('count')" id="tab-count">Count</button>
+  <button class="tab" onclick="showTab('products')" id="tab-products">Products</button>
   <button class="tab" onclick="showTab('weigh')" id="tab-weigh">Weighing</button>
   <button class="tab" onclick="showTab('records')" id="tab-records">Records</button>
   <button class="tab" onclick="showTab('setup')" id="tab-setup">Setup</button>
@@ -172,19 +221,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div id="panel-count">
     <div id="count-empty" class="empty" style="display:none;"><div style="font-size:32px;margin-bottom:10px;">📋</div>No ingredients set up yet — go to Setup to add some.</div>
     <div id="count-content" style="display:none;">
-
-      <!-- Session header -->
-      <div class="card" style="margin-bottom:14px;">
-        <div class="card-label">Session details</div>
-        <div class="field-row">
-          <div class="field"><label>Date</label><input type="date" id="session-date" /></div>
-          <div class="field"><label>Site</label>
-            <select id="session-site">
-              <option value="">Select site…</option>
-            </select>
-          </div>
+      <!-- Session banner -->
+      <div class="session-banner" id="count-session-banner">
+        <div class="session-banner-info">
+          <span class="session-chip" id="count-banner-date"></span>
+          <span class="session-chip" id="count-banner-site"></span>
+          <span class="session-chip" id="count-banner-staff"></span>
+          <span class="type-full">Full count</span>
         </div>
-        <div class="field"><label>Staff name</label><input type="text" id="session-staff" placeholder="Your name" /></div>
+        <button class="btn-sm" onclick="resetSession()">Change</button>
       </div>
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
@@ -201,10 +246,47 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
 
-  <!-- ── WEIGHING (Loose only) ── -->
+  <!-- ── PRODUCTS (Finished goods) ── -->
+  <div id="panel-products" style="display:none;">
+    <div id="products-empty" class="empty" style="display:none;"><div style="font-size:32px;margin-bottom:10px;">📦</div>No finished products set up yet.<br><span style="font-size:13px;">Add them under Setup → Products.</span></div>
+    <div id="products-content" style="display:none;">
+      <!-- Session banner -->
+      <div class="session-banner">
+        <div class="session-banner-info">
+          <span class="session-chip" id="prod-banner-date"></span>
+          <span class="session-chip" id="prod-banner-site"></span>
+          <span class="session-chip" id="prod-banner-staff"></span>
+          <span id="prod-banner-type"></span>
+        </div>
+        <button class="btn-sm" onclick="resetSession()">Change</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:13px;color:var(--text-muted);">Week of <strong id="products-week" style="color:var(--text);"></strong></div>
+        <button class="btn-sm" onclick="clearProductInputs()">Clear all</button>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="products-progress" style="width:0%"></div></div>
+      <div class="stock-summary">
+        <div class="summary-stat"><strong id="products-filled">0</strong> / <span id="products-total">0</span> filled</div>
+        <div class="summary-stat" id="products-low-wrap" style="display:none;"><strong id="products-low" style="color:var(--warn-text);">0</strong> low stock</div>
+      </div>
+      <div id="products-list"></div>
+    </div>
+  </div>
+
+
   <div id="panel-weigh" style="display:none;">
     <div id="weigh-empty" class="empty" style="display:none;"><div style="font-size:32px;margin-bottom:10px;">⚖️</div>No ingredients have loose tracking set up.<br><span style="font-size:13px;">Enable it in Setup for the relevant ingredients.</span></div>
     <div id="weigh-content" style="display:none;">
+      <!-- Session banner -->
+      <div class="session-banner">
+        <div class="session-banner-info">
+          <span class="session-chip" id="weigh-banner-date"></span>
+          <span class="session-chip" id="weigh-banner-site"></span>
+          <span class="session-chip" id="weigh-banner-staff"></span>
+          <span class="type-full">Full count</span>
+        </div>
+        <button class="btn-sm" onclick="resetSession()">Change</button>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
         <div style="font-size:13px;color:var(--text-muted);">Week of <strong id="weigh-week" style="color:var(--text);"></strong></div>
         <button class="btn-sm" onclick="clearWeighInputs()">Clear all</button>
@@ -235,14 +317,39 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div id="panel-setup" style="display:none;">
     <div class="setup-tabs">
       <button class="setup-tab active" onclick="showSetupTab('ingredients')" id="stab-ingredients">Ingredients</button>
-      <button class="setup-tab" onclick="showSetupTab('add')" id="stab-add">+ Add new</button>
+      <button class="setup-tab" onclick="showSetupTab('finproducts')" id="stab-finproducts">Products</button>
+      <button class="setup-tab" onclick="showSetupTab('add')" id="stab-add">+ Add ingredient</button>
+      <button class="setup-tab" onclick="showSetupTab('addprod')" id="stab-addprod">+ Add product</button>
       <button class="setup-tab" onclick="showSetupTab('settings')" id="stab-settings">Settings</button>
     </div>
 
-    <!-- List -->
+    <!-- Ingredients list -->
     <div id="setup-ingredients"><div id="setup-ing-list"></div></div>
 
-    <!-- Add form -->
+    <!-- Finished products list -->
+    <div id="setup-finproducts" style="display:none;"><div id="setup-prod-list"></div></div>
+
+    <!-- Add product form -->
+    <div id="setup-addprod" style="display:none;">
+      <div class="card">
+        <div class="card-label">New finished product</div>
+        <div class="field"><label>Product name</label><input type="text" id="sp-name" placeholder="e.g. Chicken Ramen" /></div>
+        <div class="field"><label>Packet label (e.g. pouches, bowls)</label><input type="text" id="sp-packet-label" placeholder="packets" /></div>
+        <div class="field"><label>Minimum stock — Cases (leave blank to skip flagging)</label><input type="number" id="sp-min" placeholder="e.g. 2" min="0" /></div>
+        <div class="field">
+          <label>Photo (tap to upload)</label>
+          <div class="photo-upload" onclick="document.getElementById('sp-photo-file').click()">
+            <img id="sp-photo-preview" class="photo-preview" style="display:none;" />
+            <div id="sp-photo-prompt">📷 Tap to upload photo</div>
+          </div>
+          <input type="file" id="sp-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('sp',event)" />
+        </div>
+        <div class="err" id="err-addprod"></div>
+        <button class="btn btn-primary" id="save-prod-btn" onclick="saveFinProduct()">Save product</button>
+      </div>
+    </div>
+
+    <!-- Add ingredient form -->
     <div id="setup-add" style="display:none;">
       <div class="card">
         <div class="card-label">New ingredient</div>
@@ -389,6 +496,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- Edit finished product modal -->
+<div class="modal-overlay" id="edit-prod-modal" style="display:none;" onclick="maybeCloseProdModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Edit product <button class="modal-close" onclick="closeProdModal()">×</button></div>
+    <div class="field"><label>Product name</label><input type="text" id="ep-name" /></div>
+    <div class="field"><label>Packet label</label><input type="text" id="ep-packet-label" placeholder="packets" /></div>
+    <div class="field"><label>Minimum stock — Cases</label><input type="number" id="ep-min" min="0" /></div>
+    <div class="field">
+      <label>Photo</label>
+      <div class="photo-upload" onclick="document.getElementById('ep-photo-file').click()">
+        <img id="ep-photo-preview" class="photo-preview" style="display:none;" />
+        <div id="ep-photo-prompt">📷 Tap to upload / change photo</div>
+      </div>
+      <input type="file" id="ep-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('ep',event)" />
+    </div>
+    <div class="err" id="err-edit-prod"></div>
+    <button class="btn btn-primary" onclick="saveFinProductEdit()" style="margin-top:4px;">Save changes</button>
+  </div>
+</div>
+
 <!-- Confirm -->
 <div class="confirm-overlay" id="confirm-overlay" style="display:none;">
   <div class="confirm-box">
@@ -406,24 +533,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <script>
 const SK_CHECKS='stock_checks_v1';
 const SK_SETTINGS='stock_settings_v1';
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbz94U9lZxLWEDhgSEw9Hbj371A0OVMmgm2yQEzQtRH7KiKfXrT4RAn-numo4M7rQpujfg/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec';
 
-let ingredients=[], stockChecks=[], settings={scriptUrl:SCRIPT_URL,sites:[]};
-let editingId=null, confirmCb=null;
+let ingredients=[], finProducts=[], stockChecks=[], settings={scriptUrl:SCRIPT_URL,sites:[]};
+let editingId=null, editingProdId=null, confirmCb=null;
 let tierState={s:{units:false,loose:false}, e:{units:false,loose:false}};
-let photoData={s:null, e:null};
+let photoData={s:null, e:null, sp:null, ep:null};
+let sessionDate='', sessionSite='', sessionStaff='', sessionType='';
 
 async function load(){
   try{const d=localStorage.getItem(SK_CHECKS);if(d)stockChecks=JSON.parse(d);}catch(e){}
   try{const d=localStorage.getItem(SK_SETTINGS);if(d)settings={scriptUrl:SCRIPT_URL,sites:[],...JSON.parse(d)};}catch(e){}
   settings.scriptUrl=SCRIPT_URL;
   document.getElementById('s-script-url').value=SCRIPT_URL;
-  document.getElementById('session-date').valueAsDate=new Date();
+  document.getElementById('picker-date').valueAsDate=new Date();
   updateSyncBadge('syncing');
-  await Promise.all([fetchIngredients(), fetchSites()]);
+  await Promise.all([fetchIngredients(), fetchSites(), fetchFinProducts()]);
   updateSyncBadge('ready');
   renderCount();
   renderSetupList();
+  renderFinProductsList();
 }
 function persistChecks(){localStorage.setItem(SK_CHECKS,JSON.stringify(stockChecks));}
 function saveLocalSettings(){localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));}
@@ -457,23 +586,82 @@ async function fetchSites(){
   try{const json=await apiGet({action:'getSites'});if(json.sites){settings.sites=json.sites;saveLocalSettings();}}catch(e){}
   populateSiteDropdown();renderSitesList();
 }
+async function fetchFinProducts(){
+  try{const json=await apiGet({action:'getFinProducts'});if(json.products)finProducts=json.products;}catch(e){}
+}
 
+// ── Session picker ──
+function openSetupFromPicker(){
+  document.getElementById('session-overlay').style.display='none';
+  // Show all tabs
+  ['count','weigh','products','setup'].forEach(id=>{
+    const el=document.getElementById('tab-'+id);if(el)el.style.display='';
+  });
+  showTab('setup');
+}
+function startSession(type){
+  const date=document.getElementById('picker-date').value;
+  const site=document.getElementById('picker-site').value;
+  const staff=document.getElementById('picker-staff').value.trim();
+  const err=document.getElementById('session-err');
+  if(!date||!site||!staff){err.style.display='';return;}
+  err.style.display='none';
+  sessionDate=date; sessionSite=site; sessionStaff=staff; sessionType=type;
+  // Hide overlay
+  document.getElementById('session-overlay').style.display='none';
+  // Update banners everywhere
+  const dateDisp=new Date(date+'T12:00:00').toLocaleDateString('en-GB');
+  const chips=[['-banner-date',dateDisp],['-banner-site',site],['-banner-staff',staff]];
+  ['count','weigh'].forEach(prefix=>{
+    chips.forEach(([suffix,val])=>{const el=document.getElementById(prefix+suffix);if(el)el.textContent=val;});
+  });
+  ['prod'].forEach(prefix=>{
+    chips.forEach(([suffix,val])=>{const el=document.getElementById(prefix+suffix);if(el)el.textContent=val;});
+    const typeEl=document.getElementById(prefix+'-banner-type');
+    if(typeEl)typeEl.innerHTML=type==='full'?'<span class="type-full">Full count</span>':'<span class="type-products">Products only</span>';
+  });
+  // Route to correct tab based on type
+  if(type==='full'){
+    // Show all tabs, start on Count
+    document.getElementById('tab-count').style.display='';
+    document.getElementById('tab-weigh').style.display='';
+    showTab('count');
+  } else {
+    // Hide ingredient tabs, go straight to Products
+    document.getElementById('tab-count').style.display='none';
+    document.getElementById('tab-weigh').style.display='none';
+    showTab('products');
+  }
+}
+function resetSession(){
+  sessionDate='';sessionSite='';sessionStaff='';sessionType='';
+  // Restore all tabs
+  ['count','weigh','products','setup'].forEach(id=>{
+    const el=document.getElementById('tab-'+id);if(el)el.style.display='';
+  });
+  document.getElementById('session-overlay').style.display='flex';
+  clearCountInputs();clearWeighInputs();clearProductInputs();
+}
 function showTab(t){
-  ['count','weigh','records','setup'].forEach(p=>{
+  ['count','products','weigh','records','setup'].forEach(p=>{
     document.getElementById('panel-'+p).style.display=p===t?'':'none';
     document.getElementById('tab-'+p).classList.toggle('active',p===t);
   });
   if(t==='records')renderRecords();
   if(t==='count')renderCount();
   if(t==='weigh')renderWeigh();
-  if(t==='setup'){renderSetupList();fetchIngredients().then(()=>{renderSetupList();renderCount();});}
+  if(t==='products')renderProductsCount();
+  if(t==='setup'){renderSetupList();renderFinProductsList();fetchIngredients().then(()=>{renderSetupList();renderCount();});}
 }
 function showSetupTab(t){
-  ['ingredients','add','settings'].forEach(p=>{
-    document.getElementById('setup-'+p).style.display=p===t?'':'none';
-    document.getElementById('stab-'+p).classList.toggle('active',p===t);
+  ['ingredients','finproducts','add','addprod','settings'].forEach(p=>{
+    const el=document.getElementById('setup-'+p);
+    if(el)el.style.display=p===t?'':'none';
+    const tab=document.getElementById('stab-'+p);
+    if(tab)tab.classList.toggle('active',p===t);
   });
   if(t==='ingredients')renderSetupList();
+  if(t==='finproducts')renderFinProductsList();
 }
 function tierToggle(prefix,tier){
   tierState[prefix][tier]=!tierState[prefix][tier];
@@ -588,41 +776,210 @@ function clearWeighInputs(){
 }
 
 async function submitCheck(){
-  const dateVal=document.getElementById('session-date').value;
-  const siteVal=document.getElementById('session-site').value;
-  const staffVal=document.getElementById('session-staff').value.trim();
   const err=document.getElementById('err-count');
   const errFb=document.getElementById('err-count-fb');
   const showErr=(msg)=>{
-    if(err)err.style.display=msg?'':'none';if(err&&msg)err.textContent=msg;
-    if(errFb)errFb.style.display=msg?'':'none';if(errFb&&msg)errFb.textContent=msg;
+    if(err){err.style.display=msg?'':'none';if(msg)err.textContent=msg;}
+    if(errFb){errFb.style.display=msg?'':'none';if(msg)errFb.textContent=msg;}
   };
-  const missing=[];
-  if(!dateVal)missing.push('date');if(!siteVal)missing.push('site');if(!staffVal)missing.push('staff name');
-  if(missing.length){showErr('Please fill in: '+missing.join(', '));return;}
+  if(!sessionDate||!sessionSite||!sessionStaff){showErr('Session details missing — tap Change to restart.');return;}
   showErr('');
   const now=new Date().toISOString();
+
+  // Product counts — always included
+  const productRows=finProducts.map(p=>{
+    const caseVal=document.getElementById('pc_'+p.id)?.value;
+    const packetVal=document.getElementById('pp_'+p.id)?.value;
+    const caseNum=caseVal!==''?parseFloat(caseVal):'';
+    const low=p.minStock&&caseNum!==''?caseNum<p.minStock:false;
+    return{date:sessionDate,site:sessionSite,staff:sessionStaff,product:p.name,
+      cases:caseNum,packets:packetVal!==''?parseFloat(packetVal):'',packetLabel:p.packetLabel||'packets',
+      lowStock:low?'Yes':'No',savedAt:now};
+  });
+
+  if(sessionType==='products'){
+    // Products only — just submit product rows
+    stockChecks.unshift({id:uid(),date:sessionDate,site:sessionSite,staff:sessionStaff,type:'products',savedAt:now,rows:[],productRows});
+    persistChecks();showToast('Product count saved ✓');clearProductInputs();
+    resetSession();
+    updateSyncBadge('syncing');
+    try{
+      const j=await api({action:'productCount',rows:productRows});
+      updateSyncBadge(j.result==='success'?'synced':'error');
+      setTimeout(()=>updateSyncBadge('ready'),4000);
+    }catch(e){updateSyncBadge('error');setTimeout(()=>updateSyncBadge('ready'),4000);}
+    return;
+  }
+
+  // Full count — ingredient rows + product rows
   const rows=ingredients.map(ing=>{
     const caseVal=document.getElementById('case_'+ing.id)?.value;
     const unitsVal=ing.trackUnits?document.getElementById('units_'+ing.id)?.value:'';
     const looseVal=ing.trackLoose?document.getElementById('loose_'+ing.id)?.value:'';
     const caseNum=caseVal!==''?parseFloat(caseVal):'';
     const low=ing.minStock&&caseNum!==''?caseNum<ing.minStock:false;
-    return{date:dateVal,site:siteVal,staff:staffVal,ingredient:ing.name,storage:ing.storage||'Dry Store',
+    return{date:sessionDate,site:sessionSite,staff:sessionStaff,ingredient:ing.name,storage:ing.storage||'Dry Store',
       cases:caseNum,units:unitsVal!==''?parseFloat(unitsVal):'',unitsLabel:ing.unitLabel||'',
       loose:looseVal!==''?parseFloat(looseVal):'',looseUnit:ing.looseUnit||'',
       lowStock:low?'Yes':'No',savedAt:now};
   });
-  stockChecks.unshift({id:uid(),date:dateVal,site:siteVal,staff:staffVal,savedAt:now,rows});
-  persistChecks();showToast('Stock check saved ✓');clearCountInputs();clearWeighInputs();
+  stockChecks.unshift({id:uid(),date:sessionDate,site:sessionSite,staff:sessionStaff,type:'full',savedAt:now,rows,productRows});
+  persistChecks();showToast('Stock check saved ✓');clearCountInputs();clearWeighInputs();clearProductInputs();
+  resetSession();
   updateSyncBadge('syncing');
   try{
-    const json=await api({action:'stockCheck',rows});
-    updateSyncBadge(json.result==='success'?'synced':'error');
+    const [j1,j2]=await Promise.all([
+      api({action:'stockCheck',rows}),
+      productRows.length?api({action:'productCount',rows:productRows}):Promise.resolve({result:'success'})
+    ]);
+    updateSyncBadge((j1.result==='success'&&j2.result==='success')?'synced':'error');
     setTimeout(()=>updateSyncBadge('ready'),4000);
   }catch(e){updateSyncBadge('error');setTimeout(()=>updateSyncBadge('ready'),4000);}
 }
 
+// ── Finished Products Count ──
+function renderProductsCount(){
+  if(!finProducts.length){
+    document.getElementById('products-empty').style.display='';
+    document.getElementById('products-content').style.display='none';
+    return;
+  }
+  document.getElementById('products-empty').style.display='none';
+  document.getElementById('products-content').style.display='';
+  document.getElementById('products-week').textContent=weekOf();
+  document.getElementById('products-total').textContent=finProducts.length;
+  document.getElementById('products-list').innerHTML=finProducts.map(p=>{
+    const photo=p.photo?`<div class="ing-photo"><img src="${p.photo}" onerror="this.style.display='none'" /></div>`:`<div class="ing-photo">📦</div>`;
+    const packetLabel=p.packetLabel||'packets';
+    return`<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${p.name}</div><div class="tier-inputs">
+      <div class="tier-group"><label>Cases</label><input type="number" inputmode="decimal" min="0" step="1" id="pc_${p.id}" placeholder="0" oninput="checkProdLow('${p.id}');updateProductsProgress();" /></div>
+      <div class="tier-group"><label>${packetLabel}</label><input type="number" inputmode="decimal" min="0" step="1" id="pp_${p.id}" placeholder="0" oninput="updateProductsProgress();" /></div>
+    </div><div class="low-stock-flag" id="pflag_${p.id}">⚠ Low stock</div></div></div>`;
+  }).join('');
+  updateProductsProgress();
+}
+function checkProdLow(id){
+  const p=finProducts.find(x=>x.id===id);if(!p||!p.minStock)return;
+  const val=parseFloat(document.getElementById('pc_'+id)?.value)||0;
+  const flag=document.getElementById('pflag_'+id);
+  if(flag)flag.classList.toggle('visible',val<p.minStock);
+}
+function updateProductsProgress(){
+  let filled=0,low=0;
+  finProducts.forEach(p=>{
+    const v=document.getElementById('pc_'+p.id)?.value;
+    if(v!==''&&v!==undefined&&v!==null)filled++;
+    if(p.minStock&&(parseFloat(v)||0)<p.minStock)low++;
+  });
+  const pct=finProducts.length?Math.round(filled/finProducts.length*100):0;
+  document.getElementById('products-progress').style.width=pct+'%';
+  document.getElementById('products-filled').textContent=filled;
+  const lw=document.getElementById('products-low-wrap');
+  lw.style.display=low>0?'':'none';
+  document.getElementById('products-low').textContent=low;
+}
+function clearProductInputs(){
+  finProducts.forEach(p=>{
+    ['pc_','pp_'].forEach(x=>{const el=document.getElementById(x+p.id);if(el)el.value='';});
+    const f=document.getElementById('pflag_'+p.id);if(f)f.classList.remove('visible');
+  });
+  updateProductsProgress();
+}
+
+// ── Setup — finished products ──
+function renderFinProductsList(){
+  const c=document.getElementById('setup-prod-list');
+  if(!c)return;
+  if(!finProducts.length){c.innerHTML='<div class="empty" style="padding:32px 16px;">No finished products yet — tap "+ Add product".</div>';return;}
+  c.innerHTML=finProducts.map(p=>`
+    <div class="ing-setup-item">
+      <div class="ing-setup-photo" onclick="openProdEdit('${p.id}')">${p.photo?`<img src="${p.photo}" onerror="this.style.display='none'" />`:'📦'}</div>
+      <div class="ing-setup-body"><div class="ing-setup-name">${p.name}</div><div class="ing-setup-meta">Cases + ${p.packetLabel||'packets'}${p.minStock?' · min '+p.minStock+' cases':''}</div></div>
+      <div class="ing-setup-actions"><button class="btn-sm" onclick="openProdEdit('${p.id}')">Edit</button><button class="btn-sm btn-danger-sm" onclick="confirmDeleteProd('${p.id}')">✕</button></div>
+    </div>`).join('');
+}
+async function saveFinProduct(){
+  const name=document.getElementById('sp-name').value.trim();
+  const err=document.getElementById('err-addprod');
+  if(!name){err.style.display='';err.textContent='Please enter a product name.';return;}
+  err.style.display='none';
+  const btn=document.getElementById('save-prod-btn');
+  btn.textContent='Saving…';btn.disabled=true;
+  let photoUrl=null;
+  if(photoData.sp){
+    try{const r=await api({action:'uploadPhoto',name,imageBase64:photoData.sp});if(r.url)photoUrl=r.url;}catch(e){}
+  }
+  const prod={id:uid(),name,
+    packetLabel:document.getElementById('sp-packet-label').value.trim()||'packets',
+    minStock:parseFloat(document.getElementById('sp-min').value)||null,
+    photo:photoUrl};
+  try{
+    const r=await api({action:'saveFinProduct',product:prod});
+    if(r.result==='success'){
+      finProducts.push(prod);
+      document.getElementById('sp-name').value='';
+      document.getElementById('sp-packet-label').value='';
+      document.getElementById('sp-min').value='';
+      photoData.sp=null;
+      document.getElementById('sp-photo-preview').style.display='none';
+      document.getElementById('sp-photo-prompt').style.display='';
+      document.getElementById('sp-photo-file').value='';
+      showToast(name+' added ✓');
+      showSetupTab('finproducts');
+      renderFinProductsList();renderProductsCount();
+    } else {err.style.display='';err.textContent='Failed to save.';}
+  }catch(e){err.style.display='';err.textContent='No connection.';}
+  btn.textContent='Save product';btn.disabled=false;
+}
+function openProdEdit(id){
+  const p=finProducts.find(x=>x.id===id);if(!p)return;
+  editingProdId=id;photoData.ep=null;
+  document.getElementById('ep-name').value=p.name;
+  document.getElementById('ep-packet-label').value=p.packetLabel||'';
+  document.getElementById('ep-min').value=p.minStock||'';
+  const prev=document.getElementById('ep-photo-preview');
+  if(p.photo){prev.src=p.photo;prev.style.display='block';document.getElementById('ep-photo-prompt').style.display='none';}
+  else{prev.style.display='none';document.getElementById('ep-photo-prompt').style.display='';}
+  document.getElementById('err-edit-prod').style.display='none';
+  document.getElementById('edit-prod-modal').style.display='flex';
+}
+function maybeCloseProdModal(e){if(e.target===document.getElementById('edit-prod-modal'))closeProdModal();}
+function closeProdModal(){document.getElementById('edit-prod-modal').style.display='none';editingProdId=null;}
+async function saveFinProductEdit(){
+  const name=document.getElementById('ep-name').value.trim();
+  const err=document.getElementById('err-edit-prod');
+  if(!name){err.style.display='';err.textContent='Name cannot be empty.';return;}
+  err.style.display='none';
+  const idx=finProducts.findIndex(x=>x.id===editingProdId);if(idx<0)return;
+  const saveBtn=document.querySelector('#edit-prod-modal .btn-primary');
+  saveBtn.textContent='Saving…';saveBtn.disabled=true;
+  let photoUrl=finProducts[idx].photo||null;
+  if(photoData.ep){
+    try{const r=await api({action:'uploadPhoto',name,imageBase64:photoData.ep});if(r.url)photoUrl=r.url;}catch(e){}
+  }
+  const updated={...finProducts[idx],name,
+    packetLabel:document.getElementById('ep-packet-label').value.trim()||'packets',
+    minStock:parseFloat(document.getElementById('ep-min').value)||null,
+    photo:photoUrl};
+  try{
+    const r=await api({action:'saveFinProduct',product:updated});
+    if(r.result==='success'){finProducts[idx]=updated;closeProdModal();renderFinProductsList();renderProductsCount();showToast('Saved ✓');}
+    else{err.style.display='';err.textContent='Failed to save.';}
+  }catch(e){err.style.display='';err.textContent='No connection.';}
+  saveBtn.textContent='Save changes';saveBtn.disabled=false;
+}
+function confirmDeleteProd(id){
+  const p=finProducts.find(x=>x.id===id);
+  document.getElementById('confirm-title').textContent='Delete product?';
+  document.getElementById('confirm-msg').textContent=`This will remove "${p?.name}" from all devices.`;
+  document.getElementById('confirm-ok-btn').textContent='Delete';
+  confirmCb=async()=>{
+    try{await api({action:'deleteFinProduct',id});}catch(e){}
+    finProducts=finProducts.filter(x=>x.id!==id);
+    renderFinProductsList();renderProductsCount();showToast('Deleted');
+  };
+  document.getElementById('confirm-overlay').style.display='flex';
+}
 function renderRecords(){
   const c=document.getElementById('records-container');
   if(!stockChecks.length){c.innerHTML='<div class="empty"><div style="font-size:32px;margin-bottom:10px;">📊</div>No stock checks submitted yet.</div>';return;}
@@ -759,11 +1116,13 @@ function confirmOk(){document.getElementById('confirm-overlay').style.display='n
 function confirmCancel(){document.getElementById('confirm-overlay').style.display='none';confirmCb=null;}
 
 function populateSiteDropdown(){
-  const sel=document.getElementById('session-site');
-  const cur=sel.value;
-  sel.innerHTML='<option value="">Select site…</option>';
-  (settings.sites||[]).forEach(s=>{const opt=document.createElement('option');opt.value=s;opt.textContent=s;sel.appendChild(opt);});
-  if(cur)sel.value=cur;
+  ['session-site','picker-site'].forEach(selId=>{
+    const sel=document.getElementById(selId);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Select site…</option>';
+    (settings.sites||[]).forEach(s=>{const opt=document.createElement('option');opt.value=s;opt.textContent=s;sel.appendChild(opt);});
+    if(cur)sel.value=cur;
+  });
 }
 function renderSitesList(){
   const c=document.getElementById('sites-list');
