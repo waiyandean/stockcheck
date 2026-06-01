@@ -515,8 +515,8 @@ function renderCount(){
 }
 function renderCountCard(ing){
   const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" onerror="this.style.display='none'" /></div>`:`<div class="ing-photo">🥫</div>`;
-  let inputs=`<div class="tier-group"><label>Cases</label><input type="number" min="0" step="1" id="case_${ing.id}" placeholder="0" oninput="checkLow('${ing.id}');updateCountProgress();" /></div>`;
-  if(ing.trackUnits)inputs+=`<div class="tier-group"><label>Units (${ing.unitLabel||'units'})</label><input type="number" min="0" step="1" id="units_${ing.id}" placeholder="0" oninput="updateCountProgress();" /></div>`;
+  let inputs=`<div class="tier-group"><label>Cases</label><input type="number" inputmode="decimal" min="0" step="1" id="case_${ing.id}" placeholder="0" oninput="checkLow('${ing.id}');updateCountProgress();" /></div>`;
+  if(ing.trackUnits)inputs+=`<div class="tier-group"><label>Units (${ing.unitLabel||'units'})</label><input type="number" inputmode="decimal" min="0" step="1" id="units_${ing.id}" placeholder="0" oninput="updateCountProgress();" /></div>`;
   return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div><div class="low-stock-flag" id="flag_${ing.id}">⚠ Low stock</div></div></div>`;
 }
 function checkLow(id){
@@ -571,7 +571,7 @@ function renderWeigh(){
 }
 function renderWeighCard(ing){
   const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" onerror="this.style.display='none'" /></div>`:`<div class="ing-photo">🥫</div>`;
-  const inputs=`<div class="tier-group"><label>Loose (${ing.looseUnit||'g'})</label><input type="number" min="0" step="0.1" id="loose_${ing.id}" placeholder="0" oninput="updateWeighProgress();" /></div>`;
+  const inputs=`<div class="tier-group"><label>Loose (${ing.looseUnit||'g'})</label><input type="number" inputmode="decimal" min="0" step="0.1" id="loose_${ing.id}" placeholder="0" oninput="updateWeighProgress();" /></div>`;
   return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div></div></div>`;
 }
 function updateWeighProgress(){
