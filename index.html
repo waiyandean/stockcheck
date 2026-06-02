@@ -210,8 +210,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </header>
 <div class="tabs">
   <button class="tab active" onclick="showTab('count')" id="tab-count">Count</button>
-  <button class="tab" onclick="showTab('products')" id="tab-products">Products</button>
   <button class="tab" onclick="showTab('weigh')" id="tab-weigh">Weighing</button>
+  <button class="tab" onclick="showTab('products')" id="tab-products">Products</button>
   <button class="tab" onclick="showTab('records')" id="tab-records">Records</button>
   <button class="tab" onclick="showTab('setup')" id="tab-setup">Setup</button>
 </div>
@@ -242,7 +242,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="summary-stat" id="count-low-wrap" style="display:none;"><strong id="count-low" style="color:var(--warn-text);">0</strong> low stock</div>
       </div>
       <div id="count-sections"></div>
-      <div class="err" id="err-count"></div>
     </div>
   </div>
 
@@ -270,6 +269,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="summary-stat" id="products-low-wrap" style="display:none;"><strong id="products-low" style="color:var(--warn-text);">0</strong> low stock</div>
       </div>
       <div id="products-list"></div>
+      <div class="err" id="err-count"></div>
+      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="submitCheck()">Submit stock check</button>
+      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:16px;">Submits count, weighing and product data together</p>
     </div>
   </div>
 
@@ -296,15 +298,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="summary-stat"><strong id="weigh-filled">0</strong> / <span id="weigh-total">0</span> weighed</div>
       </div>
       <div id="weigh-sections"></div>
-      <div class="err" id="err-count"></div>
-      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="submitCheck()">Submit stock check</button>
-      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:4px;">Submits both count and weighing data together</p>
-    </div>
-    <!-- Show submit even when no loose ingredients -->
-    <div id="weigh-submit-fallback" style="display:none;">
-      <div class="err" id="err-count-fb"></div>
-      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="submitCheck()">Submit stock check</button>
-      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:4px;">Submits count data to Sheets</p>
     </div>
   </div>
 
@@ -622,12 +615,11 @@ function startSession(type){
   });
   // Route to correct tab based on type
   if(type==='full'){
-    // Show all tabs, start on Count
     document.getElementById('tab-count').style.display='';
     document.getElementById('tab-weigh').style.display='';
     showTab('count');
   } else {
-    // Hide ingredient tabs, go straight to Products
+    // Products only — hide count and weigh, go straight to products
     document.getElementById('tab-count').style.display='none';
     document.getElementById('tab-weigh').style.display='none';
     showTab('products');
@@ -643,7 +635,7 @@ function resetSession(){
   clearCountInputs();clearWeighInputs();clearProductInputs();
 }
 function showTab(t){
-  ['count','products','weigh','records','setup'].forEach(p=>{
+  ['count','weigh','products','records','setup'].forEach(p=>{
     document.getElementById('panel-'+p).style.display=p===t?'':'none';
     document.getElementById('tab-'+p).classList.toggle('active',p===t);
   });
@@ -777,10 +769,8 @@ function clearWeighInputs(){
 
 async function submitCheck(){
   const err=document.getElementById('err-count');
-  const errFb=document.getElementById('err-count-fb');
   const showErr=(msg)=>{
     if(err){err.style.display=msg?'':'none';if(msg)err.textContent=msg;}
-    if(errFb){errFb.style.display=msg?'':'none';if(msg)errFb.textContent=msg;}
   };
   if(!sessionDate||!sessionSite||!sessionStaff){showErr('Session details missing — tap Change to restart.');return;}
   showErr('');
