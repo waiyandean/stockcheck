@@ -171,8 +171,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .session-heading{font-size:22px;font-weight:500;text-align:center;margin-bottom:6px;}
 .session-sub{font-size:14px;color:var(--text-muted);text-align:center;margin-bottom:28px;}
 .session-fields{width:100%;max-width:360px;margin-bottom:24px;}
-.session-fields /* ── Form field wrapper — labels + inputs used in Setup and session picker ── */
-.field{margin-bottom:12px;}
+.session-fields .field{margin-bottom:12px;}
 .session-fields .field label{display:block;font-size:12px;font-family:monospace;color:var(--text-muted);margin-bottom:5px;letter-spacing:.03em;}
 .session-fields .field input,.session-fields .field select{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:16px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;appearance:none;-webkit-appearance:none;}
 .session-fields .field input:focus,.session-fields .field select:focus{border-color:var(--accent);}
@@ -620,12 +619,13 @@ const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSM
 // confirmCb     — function to call if the user confirms a delete dialog
 // tierState     — tracks whether Units/Loose toggles are on in Add/Edit forms
 // photoData     — holds base64 image data before uploading to Drive
-// session*      — date, site, staff name, and type set at session start
+// session* — date, site, staff name, and type set at session start
 let ingredients=[], finProducts=[], stockChecks=[], settings={scriptUrl:SCRIPT_URL,sites:[]};
 let editingId=null, editingProdId=null, confirmCb=null;
 let tierState={s:{units:false,loose:false}, e:{units:false,loose:false}};
 let photoData={s:null, e:null, sp:null, ep:null};
 let sessionDate='', sessionSite='', sessionStaff='', sessionType='';
+let inputState={};
 
 // ============================================================
 // BOOT: load() runs once when the page opens.
@@ -828,9 +828,12 @@ function renderCount(){
 }
 function renderCountCard(ing){
   const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" onerror="this.style.display='none'" /></div>`:`<div class="ing-photo">🥫</div>`;
-  let inputs=`<div class="tier-group"><label>Cases</label><input type="number" inputmode="decimal" min="0" step="1" id="case_${ing.id}" placeholder="0" oninput="checkLow('${ing.id}');updateCountProgress();" /></div>`;
-  if(ing.trackUnits)inputs+=`<div class="tier-group"><label>Units (${ing.unitLabel||'units'})</label><input type="number" inputmode="decimal" min="0" step="1" id="units_${ing.id}" placeholder="0" oninput="updateCountProgress();" /></div>`;
-  return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div><div class="low-stock-flag" id="flag_${ing.id}">⚠ Low stock</div></div></div>`;
+  const cv=inputState['case_'+ing.id]||'';
+  const uv=inputState['units_'+ing.id]||'';
+  let inputs=`<div class="tier-group"><label>Cases</label><input type="number" inputmode="decimal" min="0" step="1" id="case_${ing.id}" value="${cv}" placeholder="0" oninput="inputState[this.id]=this.value;checkLow('${ing.id}');updateCountProgress();" /></div>`;
+  if(ing.trackUnits)inputs+=`<div class="tier-group"><label>Units (${ing.unitLabel||'units'})</label><input type="number" inputmode="decimal" min="0" step="1" id="units_${ing.id}" value="${uv}" placeholder="0" oninput="inputState[this.id]=this.value;updateCountProgress();" /></div>`;
+  const isLow = ing.minStock && cv !== '' && parseFloat(cv) < ing.minStock;
+  return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div><div class="low-stock-flag${isLow?' visible':''}" id="flag_${ing.id}">⚠ Low stock</div></div></div>`;
 }
 function checkLow(id){
   const ing=ingredients.find(i=>i.id===id);if(!ing||!ing.minStock)return;
@@ -854,7 +857,10 @@ function updateCountProgress(){
 }
 function clearCountInputs(){
   ingredients.forEach(ing=>{
-    ['case_','units_'].forEach(p=>{const el=document.getElementById(p+ing.id);if(el)el.value='';});
+    ['case_','units_'].forEach(p=>{
+      const el=document.getElementById(p+ing.id);if(el)el.value='';
+      inputState[p+ing.id]='';
+    });
     const f=document.getElementById('flag_'+ing.id);if(f)f.classList.remove('visible');
   });
   updateCountProgress();
@@ -891,7 +897,8 @@ function renderWeigh(){
 }
 function renderWeighCard(ing){
   const photo=ing.photo?`<div class="ing-photo"><img src="${ing.photo}" onerror="this.style.display='none'" /></div>`:`<div class="ing-photo">🥫</div>`;
-  const inputs=`<div class="tier-group"><label>Loose (${ing.looseUnit||'g'})</label><input type="number" inputmode="decimal" min="0" step="0.1" id="loose_${ing.id}" placeholder="0" oninput="updateWeighProgress();" /></div>`;
+  const lv=inputState['loose_'+ing.id]||'';
+  const inputs=`<div class="tier-group"><label>Loose (${ing.looseUnit||'g'})</label><input type="number" inputmode="decimal" min="0" step="0.1" id="loose_${ing.id}" value="${lv}" placeholder="0" oninput="inputState[this.id]=this.value;updateWeighProgress();" /></div>`;
   return `<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${ing.name}</div><div class="tier-inputs">${inputs}</div></div></div>`;
 }
 function updateWeighProgress(){
@@ -903,7 +910,10 @@ function updateWeighProgress(){
   document.getElementById('weigh-filled').textContent=filled;
 }
 function clearWeighInputs(){
-  ingredients.filter(i=>i.trackLoose).forEach(ing=>{const el=document.getElementById('loose_'+ing.id);if(el)el.value='';});
+  ingredients.filter(i=>i.trackLoose).forEach(ing=>{
+    const el=document.getElementById('loose_'+ing.id);if(el)el.value='';
+    inputState['loose_'+ing.id]='';
+  });
   updateWeighProgress();
 }
 
@@ -997,10 +1007,13 @@ function renderProductsCount(){
   document.getElementById('products-list').innerHTML=finProducts.map(p=>{
     const photo=p.photo?`<div class="ing-photo"><img src="${p.photo}" onerror="this.style.display='none'" /></div>`:`<div class="ing-photo">📦</div>`;
     const packetLabel=p.packetLabel||'packets';
+    const cv=inputState['pc_'+p.id]||'';
+    const pv=inputState['pp_'+p.id]||'';
+    const isLow = p.minStock && cv !== '' && parseFloat(cv) < p.minStock;
     return`<div class="ing-card">${photo}<div class="ing-body"><div class="ing-name">${p.name}</div><div class="tier-inputs">
-      <div class="tier-group"><label>Cases</label><input type="number" inputmode="decimal" min="0" step="1" id="pc_${p.id}" placeholder="0" oninput="checkProdLow('${p.id}');updateProductsProgress();" /></div>
-      <div class="tier-group"><label>${packetLabel}</label><input type="number" inputmode="decimal" min="0" step="1" id="pp_${p.id}" placeholder="0" oninput="updateProductsProgress();" /></div>
-    </div><div class="low-stock-flag" id="pflag_${p.id}">⚠ Low stock</div></div></div>`;
+      <div class="tier-group"><label>Cases</label><input type="number" inputmode="decimal" min="0" step="1" id="pc_${p.id}" value="${cv}" placeholder="0" oninput="inputState[this.id]=this.value;checkProdLow('${p.id}');updateProductsProgress();" /></div>
+      <div class="tier-group"><label>${packetLabel}</label><input type="number" inputmode="decimal" min="0" step="1" id="pp_${p.id}" value="${pv}" placeholder="0" oninput="inputState[this.id]=this.value;updateProductsProgress();" /></div>
+    </div><div class="low-stock-flag${isLow?' visible':''}" id="pflag_${p.id}">⚠ Low stock</div></div></div>`;
   }).join('');
   updateProductsProgress();
 }
@@ -1026,7 +1039,10 @@ function updateProductsProgress(){
 }
 function clearProductInputs(){
   finProducts.forEach(p=>{
-    ['pc_','pp_'].forEach(x=>{const el=document.getElementById(x+p.id);if(el)el.value='';});
+    ['pc_','pp_'].forEach(x=>{
+      const el=document.getElementById(x+p.id);if(el)el.value='';
+      inputState[x+p.id]='';
+    });
     const f=document.getElementById('pflag_'+p.id);if(f)f.classList.remove('visible');
   });
   updateProductsProgress();
@@ -1330,3 +1346,4 @@ load();
 </script>
 </body>
 </html>
+
