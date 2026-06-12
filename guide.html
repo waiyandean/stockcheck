@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Stock Check — How to submit a product count</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#1a1916" />
+<style>
+:root {
+  --bg:#f5f4f0; --surface:#fff; --border:#e0ddd6; --border-strong:#c8c4bb;
+  --text:#1a1916; --text-muted:#7a776e; --text-hint:#b0ada5;
+  --accent:#1a1916; --accent-fg:#fff;
+  --success-bg:#edf7ed; --success-text:#2d6e2d; --success-border:#b2d9b2;
+  --warn-bg:#fdf6e3; --warn-text:#8a6500; --warn-border:#f0d88a;
+  --danger-bg:#fdecea; --danger-text:#c0392b; --danger-border:#f5b8b3;
+  --radius:10px; --radius-sm:6px; --font:'Lexend',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:48px;}
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;}
+.app-title{font-size:17px;font-weight:400;}
+.app-title span{color:var(--text-muted);}
+.content{padding:16px;max-width:640px;margin:0 auto;}
+
+/* Step cards */
+.step{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 18px 18px 20px;margin-bottom:12px;display:flex;gap:16px;align-items:flex-start;}
+.step-num{width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.step-body{flex:1;min-width:0;}
+.step-title{font-size:15px;font-weight:500;margin-bottom:4px;}
+.step-desc{font-size:13px;color:var(--text-muted);line-height:1.6;}
+
+/* Section labels */
+.section-label{font-size:11px;font-family:monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin:24px 0 10px;}
+
+/* Callout boxes */
+.callout{border-radius:var(--radius-sm);padding:13px 15px;font-size:13px;line-height:1.6;margin-bottom:12px;}
+.callout-warn{background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);}
+.callout-success{background:var(--success-bg);border:1px solid var(--success-border);color:var(--success-text);}
+.callout-title{font-weight:600;margin-bottom:4px;}
+
+/* UI mock labels — small badges that look like the app UI */
+.ui-btn{display:inline-block;background:var(--accent);color:var(--accent-fg);font-size:12px;font-family:monospace;border-radius:var(--radius-sm);padding:3px 9px;vertical-align:middle;white-space:nowrap;}
+.ui-tab{display:inline-block;background:var(--surface);color:var(--text);font-size:12px;font-family:monospace;border:1px solid var(--border-strong);border-radius:20px;padding:3px 9px;vertical-align:middle;white-space:nowrap;}
+.ui-chip{display:inline-block;background:var(--bg);color:var(--text-muted);font-size:12px;font-family:monospace;border:1px solid var(--border);border-radius:20px;padding:2px 8px;vertical-align:middle;white-space:nowrap;}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:24px 0;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="Logo.png" alt="Logo" style="height:32px;object-fit:contain;"/>
+    <div class="app-title">Stock <span>Guide</span></div>
+  </div>
+  <a href="index.html" style="font-size:12px;font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--text-muted);text-decoration:none;">← Stock Check</a>
+</header>
+
+<div class="content">
+
+  <div style="padding:20px 0 8px;">
+    <div style="font-size:20px;font-weight:500;margin-bottom:6px;">How to submit a product count</div>
+    <div style="font-size:14px;color:var(--text-muted);line-height:1.6;">Follow these steps each time you do a daily product count. The whole process takes about 2 minutes.</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section-label">Step by step</div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <div class="step-title">Open Stock Check</div>
+      <div class="step-desc">Open the Stock Check page on your phone or device. You will see the start screen with a logo and the heading <strong>Start a session</strong>.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <div class="step-title">Fill in your session details</div>
+      <div class="step-desc">
+        Enter today's <strong>date</strong>, select your <strong>site</strong> from the dropdown, and type your <strong>name</strong> in the Staff name field.<br><br>
+        All three fields must be filled in before you can continue.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <div class="step-title">Tap "Products only"</div>
+      <div class="step-desc">
+        For a daily product count, tap the <strong>Products only</strong> button — <em>Finished goods count — daily</em>.<br><br>
+        Only tap <strong>Full count</strong> when doing the weekly ingredient count as well.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <div class="step-title">Count your products and enter the numbers</div>
+      <div class="step-desc">
+        You will see a list of all finished products. For each one, enter:<br><br>
+        &nbsp;• <strong>Cases</strong> — the number of full sealed cases<br>
+        &nbsp;• <strong>Packets / pouches</strong> — any open or loose units<br><br>
+        Leave a field as <strong>0</strong> if there are none. Do not leave fields blank.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <div class="step-title">Tap "Submit stock check"</div>
+      <div class="step-desc">
+        Once all products are filled in, scroll to the bottom and tap <span class="ui-btn">Submit stock check</span>.<br><br>
+        The form will save and sync to Google Sheets automatically. You will be taken back to the start screen when it is done.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section-label">Common mistake to avoid</div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">⚠ Do not enter counts into the Setup page</div>
+    The <strong>Stock Setup</strong> page is for managers to configure product names and settings — it is not where you enter your daily counts. If you see fields labelled <em>Product name</em>, <em>Packet label</em>, or <em>Minimum stock</em>, you are in the wrong place.<br><br>
+    Go back to <strong>Stock Check</strong> and start from Step 1.
+  </div>
+
+  <div class="callout callout-success">
+    <div class="callout-title">✓ You are in the right place if you see…</div>
+    A list of your products with <strong>Cases</strong> and <strong>Packets</strong> number inputs, and a black <span class="ui-btn">Submit stock check</span> button at the bottom of the page.
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section-label">Quick reference</div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:13px;font-weight:500;">Stock Check <span style="color:var(--text-muted);font-weight:400;">(index.html)</span></span>
+      <span style="font-size:12px;font-family:monospace;background:var(--success-bg);color:var(--success-text);border:1px solid var(--success-border);border-radius:20px;padding:2px 8px;">For staff</span>
+    </div>
+    <div style="padding:12px 16px;font-size:13px;color:var(--text-muted);line-height:1.6;">
+      Where you do your daily or weekly counts. Start here every time.
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:13px;font-weight:500;">Stock Setup <span style="color:var(--text-muted);font-weight:400;">(setup.html)</span></span>
+      <span style="font-size:12px;font-family:monospace;background:var(--warn-bg);color:var(--warn-text);border:1px solid var(--warn-border);border-radius:20px;padding:2px 8px;">Managers only</span>
+    </div>
+    <div style="padding:12px 16px;font-size:13px;color:var(--text-muted);line-height:1.6;">
+      For adding or editing products and ingredients. Do not enter counts here.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
