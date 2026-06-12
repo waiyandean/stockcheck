@@ -226,7 +226,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <!-- ── App header: "Stock Check" title on the left, sync status badge on the right ── -->
 <header class="app-header">
-  <div class="app-title">Stock <span>Check</span></div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="Logo.png" alt="Logo" style="height:32px;object-fit:contain;"/>
+    <div class="app-title">Stock <span>Check</span></div>
+  </div>
   <div class="sync-badge" id="sync-status">● sheets</div>
 </header>
 <!-- ── Tab bar: Count | Weighing | Products | Records | Setup
