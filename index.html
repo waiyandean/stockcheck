@@ -241,7 +241,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <button class="tab" onclick="showTab('weigh')" id="tab-weigh">Weighing</button>
   <button class="tab" onclick="showTab('products')" id="tab-products">Products</button>
   <button class="tab" onclick="showTab('records')" id="tab-records">Records</button>
-  <button class="tab" onclick="showTab('setup')" id="tab-setup">Setup</button>
 </div>
 <div class="content">
 
@@ -362,242 +361,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="records-container"><div class="empty"><div style="font-size:32px;margin-bottom:10px;">📊</div>No stock checks submitted yet.</div></div>
   </div>
 
-  <!-- ============================================================
-       SETUP PANEL
-       Manager-facing section for managing ingredients and products.
-       Sub-tabs:
-         Ingredients    — list of all ingredients (from Sheets)
-         Products       — list of all finished products (from Sheets)
-         + Add ingredient — form to create a new ingredient
-         + Add product   — form to create a new finished product
-         Settings        — Apps Script URL and site management
-       ============================================================ -->
-  <div id="panel-setup" style="display:none;">
-    <div class="setup-tabs">
-      <button class="setup-tab active" onclick="showSetupTab('ingredients')" id="stab-ingredients">Ingredients</button>
-      <button class="setup-tab" onclick="showSetupTab('finproducts')" id="stab-finproducts">Products</button>
-      <button class="setup-tab" onclick="showSetupTab('add')" id="stab-add">+ Add ingredient</button>
-      <button class="setup-tab" onclick="showSetupTab('addprod')" id="stab-addprod">+ Add product</button>
-      <button class="setup-tab" onclick="showSetupTab('settings')" id="stab-settings">Settings</button>
-    </div>
-
-    <!-- List of all ingredients fetched from Sheets, grouped by storage area -->
-    <div id="setup-ingredients"><div id="setup-ing-list"></div></div>
-
-    <!-- List of all finished products fetched from Sheets -->
-    <div id="setup-finproducts" style="display:none;"><div id="setup-prod-list"></div></div>
-
-    <!-- Form for adding a new finished product (name, packet label, min stock, photo) -->
-    <div id="setup-addprod" style="display:none;">
-      <div class="card">
-        <div class="card-label">New finished product</div>
-        <div class="field"><label>Product name</label><input type="text" id="sp-name" placeholder="e.g. Chicken Ramen" /></div>
-        <div class="field"><label>Packet label (e.g. pouches, bowls)</label><input type="text" id="sp-packet-label" placeholder="packets" /></div>
-        <div class="field"><label>Minimum stock — Cases (leave blank to skip flagging)</label><input type="number" id="sp-min" placeholder="e.g. 2" min="0" /></div>
-        <div class="field">
-          <label>Photo (tap to upload)</label>
-          <div class="photo-upload" onclick="document.getElementById('sp-photo-file').click()">
-            <img id="sp-photo-preview" class="photo-preview" style="display:none;" />
-            <div id="sp-photo-prompt">📷 Tap to upload photo</div>
-          </div>
-          <input type="file" id="sp-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('sp',event)" />
-        </div>
-        <div class="err" id="err-addprod"></div>
-        <button class="btn btn-primary" id="save-prod-btn" onclick="saveFinProduct()">Save product</button>
-      </div>
-    </div>
-
-    <!-- Form for adding a new ingredient (name, storage, tiers, min stock, photo) -->
-    <div id="setup-add" style="display:none;">
-      <div class="card">
-        <div class="card-label">New ingredient</div>
-        <div class="field"><label>Ingredient name</label><input type="text" id="s-name" placeholder="e.g. Granulated Sugar" /></div>
-        <div class="field">
-          <label>Storage area</label>
-          <select id="s-storage"><option value="Dry Store">Dry Store</option><option value="Fridge">Fridge</option><option value="Freezer">Freezer</option></select>
-        </div>
-        <div class="field">
-          <label>Minimum stock level — Cases (leave blank to skip low stock flagging)</label>
-          <input type="number" id="s-min" placeholder="e.g. 1" min="0" />
-        </div>
-
-        <!-- Tier setup -->
-        <div class="field">
-          <label style="margin-bottom:10px;">Tracking tiers</label>
-          <div class="tier-setup-row">
-
-            <!-- Case — always on -->
-            <div class="tier-row">
-              <div class="tier-row-info">
-                <div class="tier-row-label">📦 Case <span style="font-size:11px;color:var(--success-text);font-family:monospace;">always tracked</span></div>
-                <div class="tier-row-sub">Sealed outer cartons / boxes</div>
-              </div>
-            </div>
-
-            <!-- Units -->
-            <div class="tier-row">
-              <div class="tier-row-info">
-                <div class="tier-row-label">🫙 Units</div>
-                <div class="tier-row-sub">Individual sealed items inside a case</div>
-                <div class="tier-row-extra" id="s-units-extra" style="display:none;">
-                  <input class="tier-mini-input" id="s-unit-label" placeholder="label, e.g. jars" />
-                </div>
-              </div>
-              <button class="toggle" id="s-units-toggle" onclick="tierToggle('s','units')"></button>
-            </div>
-
-            <!-- Loose -->
-            <div class="tier-row">
-              <div class="tier-row-info">
-                <div class="tier-row-label">⚖️ Loose</div>
-                <div class="tier-row-sub">Open / partial amount by weight or volume</div>
-                <div class="tier-row-extra" id="s-loose-extra" style="display:none;">
-                  <select class="tier-mini-select" id="s-loose-unit">
-                    <option value="g">g</option><option value="kg">kg</option>
-                    <option value="ml">ml</option><option value="L">L</option>
-                  </select>
-                </div>
-              </div>
-              <button class="toggle" id="s-loose-toggle" onclick="tierToggle('s','loose')"></button>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Photo (tap to upload)</label>
-          <div class="photo-upload" id="s-photo-area" onclick="document.getElementById('s-photo-file').click()">
-            <img id="s-photo-preview" class="photo-preview" style="display:none;" />
-            <div id="s-photo-prompt">📷 Tap to upload photo</div>
-          </div>
-          <input type="file" id="s-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('s',event)" />
-        </div>
-
-        <div class="err" id="err-add"></div>
-        <button class="btn btn-primary" id="save-ing-btn" onclick="saveIngredient()">Save ingredient</button>
-      </div>
-    </div>
-
-    <!-- Settings: manage sites list and Apps Script URL for Google Sheets sync -->
-    <div id="setup-settings" style="display:none;">
-      <div class="card">
-        <div class="card-label">Sites</div>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Add each site that will use this form.</p>
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <input type="text" id="new-site" placeholder="e.g. Soho Kitchen" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:var(--font);outline:none;" onkeydown="if(event.key==='Enter')addSite()" />
-          <button class="btn-sm" style="background:var(--accent);color:var(--accent-fg);border-color:var(--accent);padding:10px 16px;" onclick="addSite()">Add</button>
-        </div>
-        <div id="sites-list"></div>
-      </div>
-      <div class="card">
-        <div class="card-label">Google Sheets sync</div>
-        <div class="field"><label>Apps Script URL</label><input type="text" id="s-script-url" placeholder="https://script.google.com/macros/s/..." /></div>
-        <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
-      </div>
-      <div class="card" style="margin-top:12px;">
-        <div class="card-label">Danger zone</div>
-        <button class="btn btn-secondary" style="margin-top:0;" onclick="confirmClearAll()">Clear all data from this device</button>
-      </div>
-    </div>
-  </div>
 </div>
 
-<!-- ============================================================
-     EDIT INGREDIENT MODAL
-     Slides up from the bottom when staff tap Edit on an ingredient.
-     Pre-populated with existing values by openEdit() in JS.
-     ============================================================ -->
-<div class="modal-overlay" id="edit-modal" style="display:none;" onclick="maybeCloseModal(event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-title">Edit ingredient <button class="modal-close" onclick="closeModal()">×</button></div>
-    <div class="field"><label>Name</label><input type="text" id="e-name" /></div>
-    <div class="field">
-      <label>Storage area</label>
-      <select id="e-storage"><option value="Dry Store">Dry Store</option><option value="Fridge">Fridge</option><option value="Freezer">Freezer</option></select>
-    </div>
-    <div class="field"><label>Minimum stock level — Cases</label><input type="number" id="e-min" min="0" /></div>
-    <div class="field">
-      <label style="margin-bottom:10px;">Tracking tiers</label>
-      <div class="tier-setup-row">
-        <div class="tier-row">
-          <div class="tier-row-info"><div class="tier-row-label">📦 Case <span style="font-size:11px;color:var(--success-text);font-family:monospace;">always tracked</span></div><div class="tier-row-sub">Sealed outer cartons / boxes</div></div>
-        </div>
-        <div class="tier-row">
-          <div class="tier-row-info">
-            <div class="tier-row-label">🫙 Units</div>
-            <div class="tier-row-sub">Individual sealed items inside a case</div>
-            <div class="tier-row-extra" id="e-units-extra" style="display:none;"><input class="tier-mini-input" id="e-unit-label" placeholder="label, e.g. jars" /></div>
-          </div>
-          <button class="toggle" id="e-units-toggle" onclick="tierToggle('e','units')"></button>
-        </div>
-        <div class="tier-row">
-          <div class="tier-row-info">
-            <div class="tier-row-label">⚖️ Loose</div>
-            <div class="tier-row-sub">Open / partial amount by weight or volume</div>
-            <div class="tier-row-extra" id="e-loose-extra" style="display:none;">
-              <select class="tier-mini-select" id="e-loose-unit">
-                <option value="g">g</option><option value="kg">kg</option>
-                <option value="ml">ml</option><option value="L">L</option>
-              </select>
-            </div>
-          </div>
-          <button class="toggle" id="e-loose-toggle" onclick="tierToggle('e','loose')"></button>
-        </div>
-      </div>
-    </div>
-    <div class="field">
-      <label>Photo</label>
-      <div class="photo-upload" onclick="document.getElementById('e-photo-file').click()">
-        <img id="e-photo-preview" class="photo-preview" style="display:none;" />
-        <div id="e-photo-prompt">📷 Tap to upload / change photo</div>
-      </div>
-      <input type="file" id="e-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('e',event)" />
-    </div>
-    <div class="err" id="err-edit"></div>
-    <button class="btn btn-primary" onclick="saveEdit()" style="margin-top:4px;">Save changes</button>
-  </div>
-</div>
-
-<!-- ============================================================
-     EDIT FINISHED PRODUCT MODAL
-     Slides up from the bottom when staff tap Edit on a product.
-     Pre-populated with existing values by openProdEdit() in JS.
-     ============================================================ -->
-<div class="modal-overlay" id="edit-prod-modal" style="display:none;" onclick="maybeCloseProdModal(event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-title">Edit product <button class="modal-close" onclick="closeProdModal()">×</button></div>
-    <div class="field"><label>Product name</label><input type="text" id="ep-name" /></div>
-    <div class="field"><label>Packet label</label><input type="text" id="ep-packet-label" placeholder="packets" /></div>
-    <div class="field"><label>Minimum stock — Cases</label><input type="number" id="ep-min" min="0" /></div>
-    <div class="field">
-      <label>Photo</label>
-      <div class="photo-upload" onclick="document.getElementById('ep-photo-file').click()">
-        <img id="ep-photo-preview" class="photo-preview" style="display:none;" />
-        <div id="ep-photo-prompt">📷 Tap to upload / change photo</div>
-      </div>
-      <input type="file" id="ep-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('ep',event)" />
-    </div>
-    <div class="err" id="err-edit-prod"></div>
-    <button class="btn btn-primary" onclick="saveFinProductEdit()" style="margin-top:4px;">Save changes</button>
-  </div>
-</div>
-
-<!-- ============================================================
-     CONFIRM DIALOG
-     Centred popup used for destructive actions (delete ingredient,
-     delete product, clear all). confirmCb in JS holds the action
-     to run if the user confirms.
-     ============================================================ -->
-<div class="confirm-overlay" id="confirm-overlay" style="display:none;">
-  <div class="confirm-box">
-    <div class="confirm-title" id="confirm-title">Are you sure?</div>
-    <div class="confirm-msg" id="confirm-msg"></div>
-    <div class="confirm-btns">
-      <button onclick="confirmCancel()">Cancel</button>
-      <button class="confirm-ok" id="confirm-ok-btn" onclick="confirmOk()">Delete</button>
-    </div>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -642,14 +407,11 @@ async function load(){
   try{const d=localStorage.getItem(SK_CHECKS);if(d)stockChecks=JSON.parse(d);}catch(e){}
   try{const d=localStorage.getItem(SK_SETTINGS);if(d)settings={scriptUrl:SCRIPT_URL,sites:[],...JSON.parse(d)};}catch(e){}
   settings.scriptUrl=SCRIPT_URL;
-  document.getElementById('s-script-url').value=SCRIPT_URL;
   document.getElementById('picker-date').valueAsDate=new Date();
   updateSyncBadge('syncing');
   await Promise.all([fetchIngredients(), fetchSites(), fetchFinProducts()]);
   updateSyncBadge('ready');
   renderCount();
-  renderSetupList();
-  renderFinProductsList();
 }
 // ── persistChecks: saves submitted stock check history to localStorage ──
 function persistChecks(){localStorage.setItem(SK_CHECKS,JSON.stringify(stockChecks));}
@@ -690,7 +452,7 @@ async function fetchIngredients(){
 // ── fetchSites: loads the sites list from Sheets and populates the dropdown ──
 async function fetchSites(){
   try{const json=await apiGet({action:'getSites'});if(json.sites){settings.sites=json.sites;saveLocalSettings();}}catch(e){}
-  populateSiteDropdown();renderSitesList();
+  populateSiteDropdown();
 }
 // ── fetchFinProducts: loads finished products from the FinishedProducts sheet ──
 async function fetchFinProducts(){
@@ -706,12 +468,7 @@ async function fetchFinProducts(){
 // resetSession()        — clears session state, shows overlay again
 // ============================================================
 function openSetupFromPicker(){
-  document.getElementById('session-overlay').style.display='none';
-  // Show all tabs
-  ['count','weigh','products','setup'].forEach(id=>{
-    const el=document.getElementById('tab-'+id);if(el)el.style.display='';
-  });
-  showTab('setup');
+  window.location.href='setup.html';
 }
 function startSession(type){
   const date=document.getElementById('picker-date').value;
@@ -748,8 +505,7 @@ function startSession(type){
 }
 function resetSession(){
   sessionDate='';sessionSite='';sessionStaff='';sessionType='';
-  // Restore all tabs
-  ['count','weigh','products','setup'].forEach(id=>{
+  ['count','weigh','products'].forEach(id=>{
     const el=document.getElementById('tab-'+id);if(el)el.style.display='';
   });
   document.getElementById('session-overlay').style.display='flex';
@@ -757,7 +513,7 @@ function resetSession(){
 }
 // ── showTab: switches which panel is visible and marks the tab as active ──
 function showTab(t){
-  ['count','weigh','products','records','setup'].forEach(p=>{
+  ['count','weigh','products','records'].forEach(p=>{
     document.getElementById('panel-'+p).style.display=p===t?'':'none';
     document.getElementById('tab-'+p).classList.toggle('active',p===t);
   });
@@ -765,7 +521,6 @@ function showTab(t){
   if(t==='count')renderCount();
   if(t==='weigh')renderWeigh();
   if(t==='products')renderProductsCount();
-  if(t==='setup'){renderSetupList();renderFinProductsList();fetchIngredients().then(()=>{renderSetupList();renderCount();});}
 }
 // ── showSetupTab: switches which sub-panel is visible inside Setup ──
 function showSetupTab(t){

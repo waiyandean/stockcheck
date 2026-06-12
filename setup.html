@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Stock Check — Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Stock Setup" />
+<meta name="theme-color" content="#1a1916" />
+<style>
+:root {
+  --bg:#f5f4f0; --surface:#fff; --border:#e0ddd6; --border-strong:#c8c4bb;
+  --text:#1a1916; --text-muted:#7a776e; --text-hint:#b0ada5;
+  --accent:#1a1916; --accent-fg:#fff;
+  --success-bg:#edf7ed; --success-text:#2d6e2d;
+  --warn-bg:#fdf6e3; --warn-text:#8a6500;
+  --danger-bg:#fdecea; --danger-text:#c0392b;
+  --radius:10px; --radius-sm:6px; --font:'Lexend',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px;}
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;}
+.app-title{font-size:17px;font-weight:400;}
+.app-title span{color:var(--text-muted);}
+.sync-badge{font-size:12px;font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--text-muted);}
+.content{padding:16px;max-width:640px;margin:0 auto;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.card-label{font-size:11px;font-family:monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.card-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.btn{width:100%;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-family:var(--font);cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--accent);color:var(--accent-fg);}
+.btn-primary:active{opacity:.85;}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border-strong);margin-top:10px;}
+.btn-sm{padding:6px 12px;font-size:13px;width:auto;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:var(--font);}
+.btn-sm:active{background:var(--bg);}
+.btn-danger-sm{color:var(--danger-text);border-color:transparent;}
+.btn-danger-sm:active{background:var(--danger-bg);}
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:12px;font-family:monospace;color:var(--text-muted);margin-bottom:5px;letter-spacing:.03em;}
+.field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;appearance:none;-webkit-appearance:none;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field input::placeholder{color:var(--text-hint);}
+.field select{background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="%237a776e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>');background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
+.err{display:none;color:var(--danger-text);background:var(--danger-bg);border:1px solid #f5b8b3;border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;margin-bottom:12px;}
+.section-header{display:flex;align-items:center;gap:10px;padding:10px 0 8px;margin-bottom:4px;}
+.section-title{font-size:12px;font-family:monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);font-weight:400;}
+.section-line{flex:1;height:1px;background:var(--border);}
+.section-count{font-size:11px;font-family:monospace;color:var(--text-hint);}
+.empty{text-align:center;padding:48px 16px;color:var(--text-muted);font-size:14px;}
+.setup-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.setup-tab{padding:7px 14px;font-size:13px;font-family:var(--font);border:1px solid var(--border);border-radius:20px;background:transparent;color:var(--text-muted);cursor:pointer;}
+.setup-tab.active{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
+.ing-setup-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+.ing-setup-photo{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--bg);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;cursor:pointer;}
+.ing-setup-photo img{width:100%;height:100%;object-fit:cover;border-radius:calc(var(--radius-sm) - 1px);}
+.ing-setup-body{flex:1;min-width:0;}
+.ing-setup-name{font-size:14px;font-weight:500;}
+.ing-setup-meta{font-size:11px;font-family:monospace;color:var(--text-muted);margin-top:2px;}
+.ing-setup-actions{display:flex;gap:6px;flex-shrink:0;}
+.tier-setup-row{display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);}
+.tier-row{display:flex;align-items:flex-start;gap:10px;}
+.tier-row-info{flex:1;}
+.tier-row-label{font-size:13px;font-weight:500;}
+.tier-row-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.tier-row-extra{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;}
+.toggle{width:44px;height:26px;border-radius:13px;background:var(--border-strong);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;margin-top:1px;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;transition:transform .2s;}
+.toggle.on::after{transform:translateX(18px);}
+.tier-mini-input{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;width:120px;}
+.tier-mini-select{padding:7px 24px 7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;appearance:none;-webkit-appearance:none;width:100px;background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="7" viewBox="0 0 10 7"><path d="M1 1l4 4 4-4" stroke="%237a776e" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>');background-repeat:no-repeat;background-position:right 8px center;}
+.photo-upload{border:1.5px dashed var(--border-strong);border-radius:var(--radius-sm);padding:20px;text-align:center;cursor:pointer;color:var(--text-muted);font-size:13px;background:var(--bg);}
+.photo-preview{width:80px;height:80px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--border);margin:0 auto 8px;display:block;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:flex-end;}
+.modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:20px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:16px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.modal-close{font-size:22px;color:var(--text-muted);background:none;border:none;cursor:pointer;line-height:1;}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:60;display:none;align-items:center;justify-content:center;padding:20px;}
+.confirm-box{background:var(--surface);border-radius:var(--radius);padding:20px;max-width:320px;width:100%;}
+.confirm-title{font-size:15px;font-weight:500;margin-bottom:8px;}
+.confirm-msg{font-size:13px;color:var(--text-muted);margin-bottom:16px;}
+.confirm-btns{display:flex;gap:8px;}
+.confirm-btns button{flex:1;padding:10px;border-radius:var(--radius-sm);font-size:14px;font-family:var(--font);cursor:pointer;border:1px solid var(--border);background:transparent;}
+.confirm-btns .confirm-ok{background:var(--danger-text);color:white;border-color:var(--danger-text);}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-fg);padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="Logo.png" alt="Logo" style="height:32px;object-fit:contain;"/>
+    <div class="app-title">Stock <span>Setup</span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <a href="index.html" style="font-size:12px;font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--text-muted);text-decoration:none;">← Stock Check</a>
+    <div class="sync-badge" id="sync-status">● sheets</div>
+  </div>
+</header>
+
+<div class="content">
+  <div class="setup-tabs">
+    <button class="setup-tab active" onclick="showSetupTab('ingredients')" id="stab-ingredients">Ingredients</button>
+    <button class="setup-tab" onclick="showSetupTab('finproducts')" id="stab-finproducts">Products</button>
+    <button class="setup-tab" onclick="showSetupTab('add')" id="stab-add">+ Add ingredient</button>
+    <button class="setup-tab" onclick="showSetupTab('addprod')" id="stab-addprod">+ Add product</button>
+    <button class="setup-tab" onclick="showSetupTab('settings')" id="stab-settings">Settings</button>
+  </div>
+
+  <div id="setup-ingredients"><div id="setup-ing-list"></div></div>
+
+  <div id="setup-finproducts" style="display:none;"><div id="setup-prod-list"></div></div>
+
+  <div id="setup-addprod" style="display:none;">
+    <div class="card">
+      <div class="card-label">New finished product</div>
+      <div class="field"><label>Product name</label><input type="text" id="sp-name" placeholder="e.g. Chicken Ramen" /></div>
+      <div class="field"><label>Packet label (e.g. pouches, bowls)</label><input type="text" id="sp-packet-label" placeholder="packets" /></div>
+      <div class="field"><label>Minimum stock — Cases (leave blank to skip flagging)</label><input type="number" id="sp-min" placeholder="e.g. 2" min="0" /></div>
+      <div class="field">
+        <label>Photo (tap to upload)</label>
+        <div class="photo-upload" onclick="document.getElementById('sp-photo-file').click()">
+          <img id="sp-photo-preview" class="photo-preview" style="display:none;" />
+          <div id="sp-photo-prompt">📷 Tap to upload photo</div>
+        </div>
+        <input type="file" id="sp-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('sp',event)" />
+      </div>
+      <div class="err" id="err-addprod"></div>
+      <button class="btn btn-primary" id="save-prod-btn" onclick="saveFinProduct()">Save product</button>
+    </div>
+  </div>
+
+  <div id="setup-add" style="display:none;">
+    <div class="card">
+      <div class="card-label">New ingredient</div>
+      <div class="field"><label>Ingredient name</label><input type="text" id="s-name" placeholder="e.g. Granulated Sugar" /></div>
+      <div class="field">
+        <label>Storage area</label>
+        <select id="s-storage"><option value="Dry Store">Dry Store</option><option value="Fridge">Fridge</option><option value="Freezer">Freezer</option></select>
+      </div>
+      <div class="field">
+        <label>Minimum stock level — Cases (leave blank to skip low stock flagging)</label>
+        <input type="number" id="s-min" placeholder="e.g. 1" min="0" />
+      </div>
+      <div class="field">
+        <label style="margin-bottom:10px;">Tracking tiers</label>
+        <div class="tier-setup-row">
+          <div class="tier-row">
+            <div class="tier-row-info">
+              <div class="tier-row-label">📦 Case <span style="font-size:11px;color:var(--success-text);font-family:monospace;">always tracked</span></div>
+              <div class="tier-row-sub">Sealed outer cartons / boxes</div>
+            </div>
+          </div>
+          <div class="tier-row">
+            <div class="tier-row-info">
+              <div class="tier-row-label">🫙 Units</div>
+              <div class="tier-row-sub">Individual sealed items inside a case</div>
+              <div class="tier-row-extra" id="s-units-extra" style="display:none;">
+                <input class="tier-mini-input" id="s-unit-label" placeholder="label, e.g. jars" />
+              </div>
+            </div>
+            <button class="toggle" id="s-units-toggle" onclick="tierToggle('s','units')"></button>
+          </div>
+          <div class="tier-row">
+            <div class="tier-row-info">
+              <div class="tier-row-label">⚖️ Loose</div>
+              <div class="tier-row-sub">Open / partial amount by weight or volume</div>
+              <div class="tier-row-extra" id="s-loose-extra" style="display:none;">
+                <select class="tier-mini-select" id="s-loose-unit">
+                  <option value="g">g</option><option value="kg">kg</option>
+                  <option value="ml">ml</option><option value="L">L</option>
+                </select>
+              </div>
+            </div>
+            <button class="toggle" id="s-loose-toggle" onclick="tierToggle('s','loose')"></button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Photo (tap to upload)</label>
+        <div class="photo-upload" id="s-photo-area" onclick="document.getElementById('s-photo-file').click()">
+          <img id="s-photo-preview" class="photo-preview" style="display:none;" />
+          <div id="s-photo-prompt">📷 Tap to upload photo</div>
+        </div>
+        <input type="file" id="s-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('s',event)" />
+      </div>
+      <div class="err" id="err-add"></div>
+      <button class="btn btn-primary" id="save-ing-btn" onclick="saveIngredient()">Save ingredient</button>
+    </div>
+  </div>
+
+  <div id="setup-settings" style="display:none;">
+    <div class="card">
+      <div class="card-label">Sites</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Add each site that will use this form.</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input type="text" id="new-site" placeholder="e.g. Soho Kitchen" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:var(--font);outline:none;" onkeydown="if(event.key==='Enter')addSite()" />
+        <button class="btn-sm" style="background:var(--accent);color:var(--accent-fg);border-color:var(--accent);padding:10px 16px;" onclick="addSite()">Add</button>
+      </div>
+      <div id="sites-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Google Sheets sync</div>
+      <div class="field"><label>Apps Script URL</label><input type="text" id="s-script-url" placeholder="https://script.google.com/macros/s/..." /></div>
+      <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <div class="card-label">Danger zone</div>
+      <button class="btn btn-secondary" style="margin-top:0;" onclick="confirmClearAll()">Clear all data from this device</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit ingredient modal -->
+<div class="modal-overlay" id="edit-modal" style="display:none;" onclick="maybeCloseModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Edit ingredient <button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="field"><label>Name</label><input type="text" id="e-name" /></div>
+    <div class="field">
+      <label>Storage area</label>
+      <select id="e-storage"><option value="Dry Store">Dry Store</option><option value="Fridge">Fridge</option><option value="Freezer">Freezer</option></select>
+    </div>
+    <div class="field"><label>Minimum stock level — Cases</label><input type="number" id="e-min" min="0" /></div>
+    <div class="field">
+      <label style="margin-bottom:10px;">Tracking tiers</label>
+      <div class="tier-setup-row">
+        <div class="tier-row">
+          <div class="tier-row-info"><div class="tier-row-label">📦 Case <span style="font-size:11px;color:var(--success-text);font-family:monospace;">always tracked</span></div><div class="tier-row-sub">Sealed outer cartons / boxes</div></div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-row-info">
+            <div class="tier-row-label">🫙 Units</div>
+            <div class="tier-row-sub">Individual sealed items inside a case</div>
+            <div class="tier-row-extra" id="e-units-extra" style="display:none;"><input class="tier-mini-input" id="e-unit-label" placeholder="label, e.g. jars" /></div>
+          </div>
+          <button class="toggle" id="e-units-toggle" onclick="tierToggle('e','units')"></button>
+        </div>
+        <div class="tier-row">
+          <div class="tier-row-info">
+            <div class="tier-row-label">⚖️ Loose</div>
+            <div class="tier-row-sub">Open / partial amount by weight or volume</div>
+            <div class="tier-row-extra" id="e-loose-extra" style="display:none;">
+              <select class="tier-mini-select" id="e-loose-unit">
+                <option value="g">g</option><option value="kg">kg</option>
+                <option value="ml">ml</option><option value="L">L</option>
+              </select>
+            </div>
+          </div>
+          <button class="toggle" id="e-loose-toggle" onclick="tierToggle('e','loose')"></button>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Photo</label>
+      <div class="photo-upload" onclick="document.getElementById('e-photo-file').click()">
+        <img id="e-photo-preview" class="photo-preview" style="display:none;" />
+        <div id="e-photo-prompt">📷 Tap to upload / change photo</div>
+      </div>
+      <input type="file" id="e-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('e',event)" />
+    </div>
+    <div class="err" id="err-edit"></div>
+    <button class="btn btn-primary" onclick="saveEdit()" style="margin-top:4px;">Save changes</button>
+  </div>
+</div>
+
+<!-- Edit product modal -->
+<div class="modal-overlay" id="edit-prod-modal" style="display:none;" onclick="maybeCloseProdModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Edit product <button class="modal-close" onclick="closeProdModal()">×</button></div>
+    <div class="field"><label>Product name</label><input type="text" id="ep-name" /></div>
+    <div class="field"><label>Packet label</label><input type="text" id="ep-packet-label" placeholder="packets" /></div>
+    <div class="field"><label>Minimum stock — Cases</label><input type="number" id="ep-min" min="0" /></div>
+    <div class="field">
+      <label>Photo</label>
+      <div class="photo-upload" onclick="document.getElementById('ep-photo-file').click()">
+        <img id="ep-photo-preview" class="photo-preview" style="display:none;" />
+        <div id="ep-photo-prompt">📷 Tap to upload / change photo</div>
+      </div>
+      <input type="file" id="ep-photo-file" accept="image/*" style="display:none;" onchange="handlePhoto('ep',event)" />
+    </div>
+    <div class="err" id="err-edit-prod"></div>
+    <button class="btn btn-primary" onclick="saveFinProductEdit()" style="margin-top:4px;">Save changes</button>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="confirm-overlay" id="confirm-overlay" style="display:none;">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-btns">
+      <button onclick="confirmCancel()">Cancel</button>
+      <button class="confirm-ok" id="confirm-ok-btn" onclick="confirmOk()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SK_CHECKS='stock_checks_v1';
+const SK_SETTINGS='stock_settings_v1';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec';
+
+let ingredients=[], finProducts=[], stockChecks=[], settings={scriptUrl:SCRIPT_URL,sites:[]};
+let editingId=null, editingProdId=null, confirmCb=null;
+let tierState={s:{units:false,loose:false}, e:{units:false,loose:false}};
+let photoData={s:null, e:null, sp:null, ep:null};
+
+async function load(){
+  try{const d=localStorage.getItem(SK_CHECKS);if(d)stockChecks=JSON.parse(d);}catch(e){}
+  try{const d=localStorage.getItem(SK_SETTINGS);if(d)settings={scriptUrl:SCRIPT_URL,sites:[],...JSON.parse(d)};}catch(e){}
+  settings.scriptUrl=SCRIPT_URL;
+  document.getElementById('s-script-url').value=SCRIPT_URL;
+  updateSyncBadge('syncing');
+  await Promise.all([fetchIngredients(), fetchSites(), fetchFinProducts()]);
+  updateSyncBadge('ready');
+  renderSetupList();
+  renderFinProductsList();
+}
+
+function persistChecks(){localStorage.setItem(SK_CHECKS,JSON.stringify(stockChecks));}
+function saveLocalSettings(){localStorage.setItem(SK_SETTINGS,JSON.stringify(settings));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function updateSyncBadge(state){
+  const el=document.getElementById('sync-status');
+  if(state==='syncing'){el.textContent='◌ syncing';el.style.color='#8a6500';}
+  else if(state==='synced'){el.textContent='✓ synced';el.style.color='#2d6e2d';}
+  else if(state==='error'){el.textContent='✗ error';el.style.color='#c0392b';}
+  else if(state==='no-url'){el.textContent='● local only';el.style.color='#b0ada5';}
+  else{el.textContent='● sheets';el.style.color='#2d6e2d';}
+}
+async function api(body){
+  const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(body),headers:{'Content-Type':'text/plain'}});
+  return res.json();
+}
+async function apiGet(params){
+  const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+  const res=await fetch(SCRIPT_URL+'?'+qs);
+  return res.json();
+}
+
+async function fetchIngredients(){
+  try{const json=await apiGet({action:'getIngredients'});if(json.ingredients)ingredients=json.ingredients;}catch(e){}
+}
+async function fetchSites(){
+  try{const json=await apiGet({action:'getSites'});if(json.sites){settings.sites=json.sites;saveLocalSettings();}}catch(e){}
+  renderSitesList();
+}
+async function fetchFinProducts(){
+  try{const json=await apiGet({action:'getFinProducts'});if(json.products)finProducts=json.products;}catch(e){}
+}
+
+function showSetupTab(t){
+  ['ingredients','finproducts','add','addprod','settings'].forEach(p=>{
+    const el=document.getElementById('setup-'+p);
+    if(el)el.style.display=p===t?'':'none';
+    const tab=document.getElementById('stab-'+p);
+    if(tab)tab.classList.toggle('active',p===t);
+  });
+  if(t==='ingredients')renderSetupList();
+  if(t==='finproducts')renderFinProductsList();
+  if(t==='settings')renderSitesList();
+}
+
+function tierToggle(prefix,tier){
+  tierState[prefix][tier]=!tierState[prefix][tier];
+  const on=tierState[prefix][tier];
+  document.getElementById(prefix+'-'+tier+'-toggle').classList.toggle('on',on);
+  document.getElementById(prefix+'-'+tier+'-extra').style.display=on?'':'none';
+}
+function setTier(prefix,tier,on){if(tierState[prefix][tier]!==on)tierToggle(prefix,tier);}
+function handlePhoto(prefix,e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    photoData[prefix]=ev.target.result;
+    const prev=document.getElementById(prefix+'-photo-preview');
+    const prompt=document.getElementById(prefix+'-photo-prompt');
+    prev.src=photoData[prefix];prev.style.display='block';
+    if(prompt)prompt.style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+function getGroups(){
+  const order=['Dry Store','Fridge','Freezer'];
+  const g={};order.forEach(s=>g[s]=[]);
+  ingredients.forEach(i=>{const s=i.storage||'Dry Store';if(!g[s])g[s]=[];g[s].push(i);});
+  return order.map(s=>({name:s,items:g[s]})).filter(g=>g.items.length>0);
+}
+
+// ── Ingredients list ──
+function renderSetupList(){
+  const c=document.getElementById('setup-ing-list');
+  if(!c)return;
+  if(!ingredients.length){c.innerHTML='<div class="empty" style="padding:32px 16px;">No ingredients yet — tap "+ Add ingredient" to get started.</div>';return;}
+  c.innerHTML=getGroups().map(g=>`
+    <div class="section-header"><div class="section-title">${g.name}</div><div class="section-line"></div><div class="section-count">${g.items.length}</div></div>
+    ${g.items.map(ing=>{
+      const tiers=['Case',ing.trackUnits?`Units (${ing.unitLabel||'units'})`:'',ing.trackLoose?`Loose (${ing.looseUnit||'g'})`:''].filter(Boolean).join(' · ');
+      return`<div class="ing-setup-item">
+        <div class="ing-setup-photo" onclick="openEdit('${ing.id}')">${ing.photo?`<img src="${ing.photo}" onerror="this.style.display='none'" />`:'🥫'}</div>
+        <div class="ing-setup-body"><div class="ing-setup-name">${ing.name}</div><div class="ing-setup-meta">${tiers}${ing.minStock?' · min '+ing.minStock+' cases':''}</div></div>
+        <div class="ing-setup-actions"><button class="btn-sm" onclick="openEdit('${ing.id}')">Edit</button><button class="btn-sm btn-danger-sm" onclick="confirmDelete('${ing.id}')">✕</button></div>
+      </div>`;
+    }).join('')}`).join('');
+}
+
+async function saveIngredient(){
+  const name=document.getElementById('s-name').value.trim();
+  const err=document.getElementById('err-add');
+  if(!name){err.style.display='';err.textContent='Please enter an ingredient name.';return;}
+  err.style.display='none';
+  const btn=document.getElementById('save-ing-btn');
+  btn.textContent='Saving…';btn.disabled=true;
+  let photoUrl=null;
+  if(photoData.s){
+    try{const r=await api({action:'uploadPhoto',name,imageBase64:photoData.s});if(r.url)photoUrl=r.url;}catch(e){}
+  }
+  const ing={id:uid(),name,storage:document.getElementById('s-storage').value,
+    minStock:parseFloat(document.getElementById('s-min').value)||null,
+    trackUnits:tierState.s.units,
+    unitLabel:tierState.s.units?document.getElementById('s-unit-label').value.trim()||'units':null,
+    trackLoose:tierState.s.loose,
+    looseUnit:tierState.s.loose?document.getElementById('s-loose-unit').value:null,
+    photo:photoUrl};
+  try{
+    const r=await api({action:'saveIngredient',ingredient:ing});
+    if(r.result==='success'){ingredients.push(ing);showToast(name+' added ✓');}
+    else{err.style.display='';err.textContent='Failed to save — please try again.';}
+  }catch(e){err.style.display='';err.textContent='No connection. Check internet and try again.';}
+  btn.textContent='Save ingredient';btn.disabled=false;
+  document.getElementById('s-name').value='';document.getElementById('s-min').value='';
+  document.getElementById('s-storage').value='Dry Store';
+  if(tierState.s.units)tierToggle('s','units');if(tierState.s.loose)tierToggle('s','loose');
+  document.getElementById('s-unit-label').value='';
+  photoData.s=null;document.getElementById('s-photo-preview').style.display='none';
+  document.getElementById('s-photo-prompt').style.display='';document.getElementById('s-photo-file').value='';
+  showSetupTab('ingredients');renderSetupList();
+}
+
+function openEdit(id){
+  const ing=ingredients.find(i=>i.id===id);if(!ing)return;
+  editingId=id;photoData.e=null;
+  document.getElementById('e-name').value=ing.name;
+  document.getElementById('e-storage').value=ing.storage||'Dry Store';
+  document.getElementById('e-min').value=ing.minStock||'';
+  setTier('e','units',!!ing.trackUnits);setTier('e','loose',!!ing.trackLoose);
+  if(ing.trackUnits)document.getElementById('e-unit-label').value=ing.unitLabel||'';
+  if(ing.trackLoose)document.getElementById('e-loose-unit').value=ing.looseUnit||'g';
+  const prev=document.getElementById('e-photo-preview');
+  if(ing.photo){prev.src=ing.photo;prev.style.display='block';document.getElementById('e-photo-prompt').style.display='none';}
+  else{prev.style.display='none';document.getElementById('e-photo-prompt').style.display='';}
+  document.getElementById('err-edit').style.display='none';
+  document.getElementById('edit-modal').style.display='flex';
+}
+function maybeCloseModal(e){if(e.target===document.getElementById('edit-modal'))closeModal();}
+function closeModal(){document.getElementById('edit-modal').style.display='none';editingId=null;}
+async function saveEdit(){
+  const name=document.getElementById('e-name').value.trim();
+  const err=document.getElementById('err-edit');
+  if(!name){err.style.display='';err.textContent='Name cannot be empty.';return;}
+  err.style.display='none';
+  const idx=ingredients.findIndex(i=>i.id===editingId);if(idx<0)return;
+  const saveBtn=document.querySelector('#edit-modal .btn-primary');
+  saveBtn.textContent='Saving…';saveBtn.disabled=true;
+  let photoUrl=ingredients[idx].photo||null;
+  if(photoData.e){
+    try{const r=await api({action:'uploadPhoto',name,imageBase64:photoData.e});if(r.url)photoUrl=r.url;}catch(e){}
+  }
+  const updated={...ingredients[idx],name,storage:document.getElementById('e-storage').value,
+    minStock:parseFloat(document.getElementById('e-min').value)||null,
+    trackUnits:tierState.e.units,
+    unitLabel:tierState.e.units?document.getElementById('e-unit-label').value.trim()||'units':null,
+    trackLoose:tierState.e.loose,
+    looseUnit:tierState.e.loose?document.getElementById('e-loose-unit').value:null,
+    photo:photoUrl};
+  try{
+    const r=await api({action:'saveIngredient',ingredient:updated});
+    if(r.result==='success'){ingredients[idx]=updated;closeModal();renderSetupList();showToast('Saved ✓');}
+    else{err.style.display='';err.textContent='Failed to save.';}
+  }catch(e){err.style.display='';err.textContent='No connection.';}
+  saveBtn.textContent='Save changes';saveBtn.disabled=false;
+}
+function confirmDelete(id){
+  const ing=ingredients.find(i=>i.id===id);
+  document.getElementById('confirm-title').textContent='Delete ingredient?';
+  document.getElementById('confirm-msg').textContent=`This will remove "${ing?.name}" from all devices.`;
+  document.getElementById('confirm-ok-btn').textContent='Delete';
+  confirmCb=async()=>{
+    try{await api({action:'deleteIngredient',id});}catch(e){}
+    ingredients=ingredients.filter(i=>i.id!==id);
+    renderSetupList();showToast('Deleted');
+  };
+  document.getElementById('confirm-overlay').style.display='flex';
+}
+
+// ── Finished products list ──
+function renderFinProductsList(){
+  const c=document.getElementById('setup-prod-list');
+  if(!c)return;
+  if(!finProducts.length){c.innerHTML='<div class="empty" style="padding:32px 16px;">No finished products yet — tap "+ Add product".</div>';return;}
+  c.innerHTML=finProducts.map(p=>`
+    <div class="ing-setup-item">
+      <div class="ing-setup-photo" onclick="openProdEdit('${p.id}')">${p.photo?`<img src="${p.photo}" onerror="this.style.display='none'" />`:'📦'}</div>
+      <div class="ing-setup-body"><div class="ing-setup-name">${p.name}</div><div class="ing-setup-meta">Cases + ${p.packetLabel||'packets'}${p.minStock?' · min '+p.minStock+' cases':''}</div></div>
+      <div class="ing-setup-actions"><button class="btn-sm" onclick="openProdEdit('${p.id}')">Edit</button><button class="btn-sm btn-danger-sm" onclick="confirmDeleteProd('${p.id}')">✕</button></div>
+    </div>`).join('');
+}
+async function saveFinProduct(){
+  const name=document.getElementById('sp-name').value.trim();
+  const err=document.getElementById('err-addprod');
+  if(!name){err.style.display='';err.textContent='Please enter a product name.';return;}
+  err.style.display='none';
+  const btn=document.getElementById('save-prod-btn');
+  btn.textContent='Saving…';btn.disabled=true;
+  let photoUrl=null;
+  if(photoData.sp){
+    try{const r=await api({action:'uploadPhoto',name,imageBase64:photoData.sp});if(r.url)photoUrl=r.url;}catch(e){}
+  }
+  const prod={id:uid(),name,
+    packetLabel:document.getElementById('sp-packet-label').value.trim()||'packets',
+    minStock:parseFloat(document.getElementById('sp-min').value)||null,
+    photo:photoUrl};
+  try{
+    const r=await api({action:'saveFinProduct',product:prod});
+    if(r.result==='success'){
+      finProducts.push(prod);
+      document.getElementById('sp-name').value='';
+      document.getElementById('sp-packet-label').value='';
+      document.getElementById('sp-min').value='';
+      photoData.sp=null;
+      document.getElementById('sp-photo-preview').style.display='none';
+      document.getElementById('sp-photo-prompt').style.display='';
+      document.getElementById('sp-photo-file').value='';
+      showToast(name+' added ✓');
+      showSetupTab('finproducts');
+      renderFinProductsList();
+    } else {err.style.display='';err.textContent='Failed to save.';}
+  }catch(e){err.style.display='';err.textContent='No connection.';}
+  btn.textContent='Save product';btn.disabled=false;
+}
+function openProdEdit(id){
+  const p=finProducts.find(x=>x.id===id);if(!p)return;
+  editingProdId=id;photoData.ep=null;
+  document.getElementById('ep-name').value=p.name;
+  document.getElementById('ep-packet-label').value=p.packetLabel||'';
+  document.getElementById('ep-min').value=p.minStock||'';
+  const prev=document.getElementById('ep-photo-preview');
+  if(p.photo){prev.src=p.photo;prev.style.display='block';document.getElementById('ep-photo-prompt').style.display='none';}
+  else{prev.style.display='none';document.getElementById('ep-photo-prompt').style.display='';}
+  document.getElementById('err-edit-prod').style.display='none';
+  document.getElementById('edit-prod-modal').style.display='flex';
+}
+function maybeCloseProdModal(e){if(e.target===document.getElementById('edit-prod-modal'))closeProdModal();}
+function closeProdModal(){document.getElementById('edit-prod-modal').style.display='none';editingProdId=null;}
+async function saveFinProductEdit(){
+  const name=document.getElementById('ep-name').value.trim();
+  const err=document.getElementById('err-edit-prod');
+  if(!name){err.style.display='';err.textContent='Name cannot be empty.';return;}
+  err.style.display='none';
+  const idx=finProducts.findIndex(x=>x.id===editingProdId);if(idx<0)return;
+  const saveBtn=document.querySelector('#edit-prod-modal .btn-primary');
+  saveBtn.textContent='Saving…';saveBtn.disabled=true;
+  let photoUrl=finProducts[idx].photo||null;
+  if(photoData.ep){
+    try{const r=await api({action:'uploadPhoto',name,imageBase64:photoData.ep});if(r.url)photoUrl=r.url;}catch(e){}
+  }
+  const updated={...finProducts[idx],name,
+    packetLabel:document.getElementById('ep-packet-label').value.trim()||'packets',
+    minStock:parseFloat(document.getElementById('ep-min').value)||null,
+    photo:photoUrl};
+  try{
+    const r=await api({action:'saveFinProduct',product:updated});
+    if(r.result==='success'){finProducts[idx]=updated;closeProdModal();renderFinProductsList();showToast('Saved ✓');}
+    else{err.style.display='';err.textContent='Failed to save.';}
+  }catch(e){err.style.display='';err.textContent='No connection.';}
+  saveBtn.textContent='Save changes';saveBtn.disabled=false;
+}
+function confirmDeleteProd(id){
+  const p=finProducts.find(x=>x.id===id);
+  document.getElementById('confirm-title').textContent='Delete product?';
+  document.getElementById('confirm-msg').textContent=`This will remove "${p?.name}" from all devices.`;
+  document.getElementById('confirm-ok-btn').textContent='Delete';
+  confirmCb=async()=>{
+    try{await api({action:'deleteFinProduct',id});}catch(e){}
+    finProducts=finProducts.filter(x=>x.id!==id);
+    renderFinProductsList();showToast('Deleted');
+  };
+  document.getElementById('confirm-overlay').style.display='flex';
+}
+
+// ── Sites & settings ──
+function renderSitesList(){
+  const c=document.getElementById('sites-list');
+  if(!settings.sites||!settings.sites.length){c.innerHTML='<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No sites added yet.</div>';return;}
+  c.innerHTML=settings.sites.map((s,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:14px;">${s}</span>
+      <button class="btn-sm btn-danger-sm" onclick="removeSite(${i})">✕</button>
+    </div>`).join('');
+}
+async function addSite(){
+  const input=document.getElementById('new-site');
+  const val=input.value.trim();if(!val)return;
+  if((settings.sites||[]).includes(val)){showToast('Site already exists');return;}
+  if(!settings.sites)settings.sites=[];
+  settings.sites.push(val);
+  try{await api({action:'saveSites',sites:settings.sites});}catch(e){}
+  saveLocalSettings();input.value='';
+  renderSitesList();showToast(val+' added ✓');
+}
+async function removeSite(i){
+  settings.sites.splice(i,1);
+  try{await api({action:'saveSites',sites:settings.sites});}catch(e){}
+  saveLocalSettings();renderSitesList();
+}
+function saveSettings(){saveLocalSettings();showToast('Settings saved ✓');}
+
+function confirmClearAll(){
+  document.getElementById('confirm-title').textContent='Clear local history?';
+  document.getElementById('confirm-msg').textContent='This clears stock check history from this device only. Ingredients and sites stay in Sheets.';
+  document.getElementById('confirm-ok-btn').textContent='Clear';
+  confirmCb=()=>{stockChecks=[];persistChecks();showToast('Local history cleared');};
+  document.getElementById('confirm-overlay').style.display='flex';
+}
+function confirmOk(){document.getElementById('confirm-overlay').style.display='none';if(confirmCb)confirmCb();confirmCb=null;}
+function confirmCancel(){document.getElementById('confirm-overlay').style.display='none';confirmCb=null;}
+
+load();
+</script>
+</body>
+</html>
