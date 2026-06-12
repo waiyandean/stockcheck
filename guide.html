@@ -50,6 +50,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 /* Divider */
 .divider{height:1px;background:var(--border);margin:24px 0;}
+
+/* Screenshots */
+.screenshot{display:block;width:100%;max-width:260px;margin:14px auto 0;border-radius:16px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,.10);}
+.screenshot-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.screenshot-pair img{width:100%;border-radius:12px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,.10);}
+.screenshot-caption{font-size:11px;font-family:monospace;color:var(--text-hint);text-align:center;margin-top:6px;letter-spacing:.03em;}
 </style>
 </head>
 <body>
@@ -102,8 +108,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div>
   </div>
+  <img src="guide-start.jpg" class="screenshot" alt="Start screen showing date, site, staff name filled in, and the Products only button" />
+  <div class="screenshot-caption">The start screen — fill in all three fields, then tap Products only</div>
 
-  <div class="step">
+  <div class="step" style="margin-top:14px;">
     <div class="step-num">4</div>
     <div class="step-body">
       <div class="step-title">Count your products and enter the numbers</div>
@@ -115,8 +123,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div>
   </div>
+  <div class="screenshot-pair">
+    <div>
+      <img src="guide-products.jpg" alt="Product list showing Cases and Packets inputs for each product" />
+      <div class="screenshot-caption">The product list</div>
+    </div>
+    <div>
+      <img src="guide-entering.jpg" alt="Entering a number into the Packets field with the number keyboard open" />
+      <div class="screenshot-caption">Tap a field to enter a number</div>
+    </div>
+  </div>
 
-  <div class="step">
+  <div class="step" style="margin-top:14px;">
     <div class="step-num">5</div>
     <div class="step-body">
       <div class="step-title">Tap "Submit stock check"</div>
@@ -126,6 +144,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div>
   </div>
+  <img src="guide-submit.jpg" class="screenshot" alt="Submit stock check button at the bottom of the page" />
+  <div class="screenshot-caption">Scroll to the bottom and tap Submit stock check</div>
 
   <div class="divider"></div>
 
@@ -136,8 +156,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     The <strong>Stock Setup</strong> page is for managers to configure product names and settings — it is not where you enter your daily counts. If you see fields labelled <em>Product name</em>, <em>Packet label</em>, or <em>Minimum stock</em>, you are in the wrong place.<br><br>
     Go back to <strong>Stock Check</strong> and start from Step 1.
   </div>
+  <img src="guide-wrong.jpg" class="screenshot" alt="The Stock Setup page showing Edit and delete buttons — not for entering counts" />
+  <div class="screenshot-caption" style="color:var(--warn-text);">If you see Edit and ✕ buttons, you are in Stock Setup — go back</div>
 
-  <div class="callout callout-success">
+  <div class="callout callout-success" style="margin-top:14px;">
     <div class="callout-title">✓ You are in the right place if you see…</div>
     A list of your products with <strong>Cases</strong> and <strong>Packets</strong> number inputs, and a black <span class="ui-btn">Submit stock check</span> button at the bottom of the page.
   </div>
