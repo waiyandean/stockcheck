@@ -311,6 +311,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 const SK_CHECKS='stock_checks_v1';
 const SK_SETTINGS='stock_settings_v1';
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx8donnPrSqM5aI5d8dMSMIBdOWuITzljNxTRj46div5S_VfuvODutQhQGUcHHXN5bJ_A/exec';
+// Phase 1: catalog READS (getIngredients/getSites/getFinProducts, via apiGet) now go to the
+// batching-api Worker (/catalog) — KV-cached (~0.2s vs ~2.4s). WRITES (save/delete ingredient
+// & finProduct, uploadPhoto, saveSites — all via api()) stay on SCRIPT_URL until Phase 3.
+// ROLLBACK: set CATALOG_URL=SCRIPT_URL.
+const CATALOG_URL='https://batching-api.waiyandean.workers.dev/catalog';
 
 let ingredients=[], finProducts=[], stockChecks=[], settings={scriptUrl:SCRIPT_URL,sites:[]};
 let editingId=null, editingProdId=null, confirmCb=null;
@@ -347,7 +352,7 @@ async function api(body){
 }
 async function apiGet(params){
   const qs=Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
-  const res=await fetch(SCRIPT_URL+'?'+qs);
+  const res=await fetch(CATALOG_URL+'?'+qs); // catalog reads → Worker (writes still use SCRIPT_URL via api())
   return res.json();
 }
 
